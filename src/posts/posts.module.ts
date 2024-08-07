@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { PostsController } from './posts.controller';
-import { Posts } from './posts.service';
+import { PostsService } from './posts.service';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
+  imports: [],
   controllers: [PostsController],
-  providers: [Posts]
+  providers: [PostsService]
 })
 export class PostsModule {}
