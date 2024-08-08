@@ -11,12 +11,10 @@ export class PostsService {
         private configService: ConfigService,
         private readonly httpService: HttpService
     ) {}
-
+ 
 
      async get(fields: Array<string>, include: Array<string>): Promise<Post[]> {
         const url = this.buildUrl(fields, include)
-
-        console.log(url);
 
         //TODO: add this to .env?
         const headers = {
@@ -73,12 +71,13 @@ export class PostsService {
     }
     
     private buildUrl(fields: Array<string>, include: Array<string>): string {
-        const apiUrl = this.getConfig('ghost.api_url');
+        const baseUrl = `${this.getConfig('ghost.api_url')}:${this.getConfig('ghost.port')}`;
         const contentPath = this.getConfig('ghost.content_path');
         const apiKey = this.getConfig('ghost.content_api_key');
     
-        const url = new URL(contentPath, apiUrl);
+        const url = new URL(contentPath, baseUrl);
         url.searchParams.append('key', apiKey);
+
         if (include.length > 0 ){
             url.searchParams.append('include', include.join(','));
         }
