@@ -16,6 +16,7 @@ describe('PostsController', () => {
   const ENV = process.env.NODE_ENV;
 
   beforeEach(async () => {
+    jest.clearAllMocks();
     const mockPostsService = {
       get: jest.fn().mockResolvedValue([
         { title: 'Post 1', url: 'url1', featured: true, published_at: new Date('1990-02-20T20:11:10.230Z'), tags: ['tag1'] },

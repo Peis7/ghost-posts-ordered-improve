@@ -33,8 +33,8 @@ export class PostsService {
                 return { 
                     index: this.getIndexFrom(post['tags'],'index-'),
                     title: post['title'],
-                    level: this.getLevel(post['tags'], 'level'),
-                    no_menu: this.getLevel(post['tags'], 'no_menu') ? true : false,
+                    level: this.getFirstTagWithPatther(post['tags'], 'level-'),
+                    no_menu: this.getFirstTagWithPatther(post['tags'], 'no_menu') ? true : false,
                     url: post['url'],
                     featured: post['featured'],
                     new: this.isNew(post['published_at'])
@@ -52,7 +52,7 @@ export class PostsService {
         const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
         return diffInDays < parseInt(this.configService.get<string>('ghost.new_publication_treshhold'));
     }
-    private getLevel(tags: Array<any>, pattern: String): string {
+    private getFirstTagWithPatther(tags: Array<any>, pattern: String): string {
         const tag = tags.find(tag => {
             const str = tag.slug || tag.name; 
             const regex = new RegExp(`^${pattern}.*`); 
