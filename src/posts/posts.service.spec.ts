@@ -22,6 +22,7 @@ describe('Posts Service', () => {
       get: jest.fn(),
     };
 
+    //TODO: move mock data outside
     mockPosts = [
       { title: 'Post 1', url: 'url1', featured: true, published_at: new Date('1990-02-20T20:11:10.230Z'), 
           tags: [{ name: 'index-1' }, { name: 'no_menu' }] },
@@ -68,13 +69,14 @@ describe('Posts Service', () => {
   it('should return an array of posts', async () => {
     const isNewSpy = jest.spyOn(service as any, 'isNew');
     const getFirstTagWithPattherSpy = jest.spyOn(service as any, 'getFirstTagWithPatther');
-
-
+    const getIndexFromSpy = jest.spyOn(service as any, 'getIndexFrom');
+    const buildUrlSpy = jest.spyOn(service as any, 'buildUrl');
     const posts = await service.get([], []);
 
     expect(isNewSpy).toHaveBeenCalledTimes(posts.length);
     expect(getFirstTagWithPattherSpy).toHaveBeenCalledTimes(posts.length*2);
-
+    expect(getIndexFromSpy).toHaveBeenCalledTimes(posts.length);
+    expect(buildUrlSpy).toHaveBeenCalledWith([],[]);
   });
 
   it('should return an array of posts', async () => {
