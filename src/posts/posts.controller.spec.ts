@@ -5,7 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { PostsService } from './posts.service';
 import { HttpService } from '@nestjs/axios';
-import { Post } from '../interfaces/post';
+import { Post } from '../interfaces/posts';
 import * as path from 'path';
 import configuration from '../config/configuration';
 
