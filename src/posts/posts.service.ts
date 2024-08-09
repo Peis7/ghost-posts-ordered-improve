@@ -15,6 +15,9 @@ export class PostsService {
 
      async get(fields: Array<string>, include: Array<string>): Promise<Post[]> {
         const url = this.buildUrl(fields, include)
+        const INDEX_TAG_FORMAT = 'index-'; //index-{number}
+        const LEVEL_TAG_FORMAT = 'level-'; //level-{number}
+        const NO_MENU_TAG = 'no_menu'; //level-{number}
 
         //TODO: add this to .env?
         const headers = {
@@ -23,18 +26,19 @@ export class PostsService {
         const { data } = await firstValueFrom(
             this.httpService.get<Post[]>(url, { headers }).pipe(
                 catchError((error) => {
-                    console.error('Error connecting to Ghost CMS:', error.message);
+                    console.error('Error connecting to Ghost:', error.message);
                     throw error;
                     }),
             ));
         let postData = [];
+        
         if (Array.isArray(data['posts'])){
-        postData = data['posts'].map((post)=>{
+            postData = data['posts'].map((post)=>{
                 return { 
-                    index: this.getIndexFrom(post['tags'],'index-'),
+                    index: this.getIndexFrom(post['tags'], INDEX_TAG_FORMAT),
                     title: post['title'],
-                    level: this.getFirstTagWithPatther(post['tags'], 'level-'),
-                    no_menu: this.getFirstTagWithPatther(post['tags'], 'no_menu') ? true : false,
+                    level: this.getFirstTagWithPatther(post['tags'], LEVEL_TAG_FORMAT),
+                    no_menu: this.getFirstTagWithPatther(post['tags'], NO_MENU_TAG) ? true : false,
                     url: post['url'],
                     featured: post['featured'],
                     new: this.isNew(post['published_at'])
