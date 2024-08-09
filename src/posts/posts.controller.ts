@@ -11,7 +11,7 @@ export class PostsController {
 
   @Get('/')
   async findAll(): Promise<Posts[]>   {
-    return this.postsService.get(['title','url','featured','published_at'],['tags']);
+    return this.postsService.getPostDataAndUpdateCache(['title','url','featured','published_at'],['tags']);
   }
 
   @Post('/updatecache')

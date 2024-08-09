@@ -1,11 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PostsService } from './posts.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import {  ThrottlerModule } from '@nestjs/throttler';
 import { HttpService } from '@nestjs/axios';
 import * as path from 'path';
 import configuration from '../config/configuration';
 import { of } from 'rxjs';
+import { RedisService } from '../redis/redis.service';
+import { createMock } from '@golevelup/ts-jest';
 
 
 describe('Posts Service', () => {
@@ -52,10 +54,18 @@ describe('Posts Service', () => {
         }),
         
       ],
-      providers: [PostsService, ConfigService, {
-        provide: HttpService,
-        useValue: mockHttpService,
-      },]
+      providers: [
+        PostsService, 
+        ConfigService,
+         {
+          provide: HttpService,
+          useValue: mockHttpService,
+        },
+        {
+          provide: RedisService,
+          useValue: createMock<RedisService>(),
+        },
+      ]
     }).compile();
 
     service = module.get<PostsService>(PostsService);
@@ -70,7 +80,7 @@ describe('Posts Service', () => {
     const getFirstTagWithPattherSpy = jest.spyOn(service as any, 'getFirstTagWithPatther');
     const getIndexFromSpy = jest.spyOn(service as any, 'getIndexFrom');
     const buildUrlSpy = jest.spyOn(service as any, 'buildUrl');
-    const posts = await service.get([], []);
+    const posts = await service.getPostDataAndUpdateCache([], []);
 
     expect(isNewSpy).toHaveBeenCalledTimes(posts.length);
     expect(getFirstTagWithPattherSpy).toHaveBeenCalledTimes(posts.length*2);
@@ -79,8 +89,8 @@ describe('Posts Service', () => {
   });
 
   it('should return an array of posts', async () => {
-    const spyGet = jest.spyOn(service, 'get');
-    const result = await service.get(['some'], ['value']);
+    const spyGet = jest.spyOn(service, 'getPostDataAndUpdateCache');
+    const result = await service.getPostDataAndUpdateCache(['some'], ['value']);
 
     expect(result).toEqual([
       {
@@ -116,3 +126,4 @@ describe('Posts Service', () => {
     expect(spyGet).toHaveBeenCalledWith( ['some'], ['value'] );
   });
 });
+

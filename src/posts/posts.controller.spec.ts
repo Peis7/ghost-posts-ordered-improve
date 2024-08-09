@@ -18,7 +18,7 @@ describe('PostsController', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     const mockPostsService = {
-      get: jest.fn().mockResolvedValue([
+      getPostDataAndUpdateCache: jest.fn().mockResolvedValue([
         { id: '1', title: 'Post 1', url: 'url1', featured: true, published_at: new Date('1990-02-20T20:11:10.230Z'), tags: ['tag1'] },
         { id: '2', title: 'Post 2', url: 'url2', featured: false, published_at: new Date('1960-06-29T20:11:10.230Z'), tags: ['tag2'] },
       ] as Posts[]),
@@ -72,6 +72,6 @@ describe('PostsController', () => {
       {  id: '1', title: 'Post 1', url: 'url1', featured: true, published_at: new Date('1990-02-20T20:11:10.230Z'), tags: ['tag1'] },
       {  id: '2', title: 'Post 2', url: 'url2', featured: false, published_at: new Date('1960-06-29T20:11:10.230Z'), tags: ['tag2'] },
     ]);
-    expect(postsService.get).toHaveBeenCalledWith(['title', 'url', 'featured', 'published_at'], ['tags']);
+    expect(postsService.getPostDataAndUpdateCache).toHaveBeenCalledWith(['title', 'url', 'featured', 'published_at'], ['tags']);
   });
 });
