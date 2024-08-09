@@ -5,7 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { PostsService } from './posts.service';
 import { HttpService } from '@nestjs/axios';
-import { Post } from '../interfaces/posts';
+import { Posts } from '../interfaces/posts';
 import * as path from 'path';
 import configuration from '../config/configuration';
 
@@ -19,9 +19,9 @@ describe('PostsController', () => {
     jest.clearAllMocks();
     const mockPostsService = {
       get: jest.fn().mockResolvedValue([
-        { title: 'Post 1', url: 'url1', featured: true, published_at: new Date('1990-02-20T20:11:10.230Z'), tags: ['tag1'] },
-        { title: 'Post 2', url: 'url2', featured: false, published_at: new Date('1960-06-29T20:11:10.230Z'), tags: ['tag2'] },
-      ] as Post[]),
+        { id: '1', title: 'Post 1', url: 'url1', featured: true, published_at: new Date('1990-02-20T20:11:10.230Z'), tags: ['tag1'] },
+        { id: '2', title: 'Post 2', url: 'url2', featured: false, published_at: new Date('1960-06-29T20:11:10.230Z'), tags: ['tag2'] },
+      ] as Posts[]),
     };
     
     const module: TestingModule = await Test.createTestingModule({
@@ -69,8 +69,8 @@ describe('PostsController', () => {
     const result = await controller.findAll();
 
     expect(result).toEqual([
-      {  title: 'Post 1', url: 'url1', featured: true, published_at: new Date('1990-02-20T20:11:10.230Z'), tags: ['tag1'] },
-      {  title: 'Post 2', url: 'url2', featured: false, published_at: new Date('1960-06-29T20:11:10.230Z'), tags: ['tag2'] },
+      {  id: '1', title: 'Post 1', url: 'url1', featured: true, published_at: new Date('1990-02-20T20:11:10.230Z'), tags: ['tag1'] },
+      {  id: '2', title: 'Post 2', url: 'url2', featured: false, published_at: new Date('1960-06-29T20:11:10.230Z'), tags: ['tag2'] },
     ]);
     expect(postsService.get).toHaveBeenCalledWith(['title', 'url', 'featured', 'published_at'], ['tags']);
   });

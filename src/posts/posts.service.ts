@@ -24,7 +24,7 @@ export class PostsService {
         //TODO: add this to .env?
         const headers = {
             'Accept-Version': 'v5.0',
-          };
+        };
         const { data } = await firstValueFrom(
             this.httpService.get<Posts[]>(url, { headers }).pipe(
                 catchError((error) => {
@@ -36,7 +36,8 @@ export class PostsService {
         
         if (Array.isArray(data['posts'])){
             postData = data['posts'].map((post)=>{
-                return { 
+                return {
+                    id: post['id'],
                     index: this.getIndexFrom(post['tags'], INDEX_TAG_FORMAT),
                     title: post['title'],
                     level: this.getFirstTagWithPatther(post['tags'], LEVEL_TAG_FORMAT),

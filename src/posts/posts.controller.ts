@@ -23,10 +23,12 @@ export class PostsController {
      body:{ 
         post: {
             current: {
+                id: body?.post?.current?.id || '',
                 tags: body?.post?.current?.tags || [],
                 slug: body?.post?.current?.slug || '',
             },
             previous: {
+                id: body?.post?.current?.id || '', //id is alway in present data
                 tags: body?.post?.previous?.tags || [],
                 slug: body?.post?.previous?.slug || '',
             }
