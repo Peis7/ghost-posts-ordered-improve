@@ -4,18 +4,28 @@ import { ConfigService } from '@nestjs/config';
 import { AxiosResponse } from 'axios';
 import { catchError, firstValueFrom, map, Observable } from 'rxjs';
 import { Posts } from '../interfaces/posts';
+import { RedisService } from '../redis/redis.service';
+import { POST_ORDER_DATA_KEY } from '../cache/constants';
 
 @Injectable()
 export class PostsService {
     constructor(
         private configService: ConfigService,
-        private readonly httpService: HttpService
+        private readonly httpService: HttpService,
+        private redisService: RedisService
     ) {}
- 
+    
     updateCache(): void {
         console.log("updating cache....");
+        const cached = this.redisService.get(POST_ORDER_DATA_KEY);
+        cached.then(data=>console.log(data));
     }
-     async get(fields: Array<string>, include: Array<string>): Promise<Posts[]> {
+    async getPostDataAndUpdateCache(fields: Array<string>, include: Array<string>): Promise<Posts[]> {
+        const postData = await this.get(fields, include);
+        this.setCache(POST_ORDER_DATA_KEY, JSON.stringify(postData))
+        return postData;
+    }
+    private async get(fields: Array<string>, include: Array<string>): Promise<Posts[]> {
         const url = this.buildUrl(fields, include)
         const INDEX_TAG_FORMAT = 'index-'; //index-{number}
         const LEVEL_TAG_FORMAT = 'level-'; //level-{number}
@@ -23,7 +33,7 @@ export class PostsService {
 
         //TODO: add this to .env?
         const headers = {
-            'Accept-Version': 'v5.0',
+            'Accept-Version': 'v5.0', 
         };
         const { data } = await firstValueFrom(
             this.httpService.get<Posts[]>(url, { headers }).pipe(
@@ -51,7 +61,9 @@ export class PostsService {
         return postData;
     }
 
-
+    private setCache(key, value){
+        this.redisService.set(key, value);
+    }
     private isNew(published_at){
         const publicationDate = new Date(published_at);
         const currentDate = new Date();

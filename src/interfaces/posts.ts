@@ -1,5 +1,5 @@
 export interface Posts{
-    id: string,
+    id?: string,
     title?: string,
     tags?: [String],
     url?: String

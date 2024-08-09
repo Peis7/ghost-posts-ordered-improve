@@ -4,11 +4,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from './config/configuration';
 import * as path from 'path';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { RedisModule } from './redis/redis.module';
+import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis';
 
 const ENV = process.env.NODE_ENV;
 
 @Module({
   imports: [
+    RedisModule,
     PostsModule,  
     ConfigModule.forRoot({
       envFilePath: path.resolve(!ENV ? '.env' : `.env.${ENV}`),
@@ -18,13 +21,29 @@ const ENV = process.env.NODE_ENV;
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) =>{ 
-        const ttl = config.get<number>('THROTTLE_TTL');
-        const limit = config.get<number>('THROTTLE_LIMIT');
+      useFactory: (configService: ConfigService) =>{ 
+        const ttl = configService.get<number>('THROTTLE_TTL');
+        const limit = configService.get<number>('THROTTLE_LIMIT');
+        const storage = new ThrottlerStorageRedisService(
+          configService.get('RUNNING_ON_GHA', false)
+            ? {
+                connectionName: configService.get<string>('REDIS_CONNECTION_NAME'),
+                host: configService.get<string>('REDIS_HOST'),
+                port: Number(configService.get<string>('REDIS_PORT')),
+              }
+            : {
+                connectionName: configService.get<string>('REDIS_CONNECTION_NAME'),
+                host: configService.get<string>('REDIS_HOST'),
+                port: Number(configService.get<number>('REDIS_PORT')),
+                username: configService.get<string>('REDIS_USER_NAME'),
+                password: configService.get<string>('REDIS_PASSWORD'),
+              },
+        );
         return [
           {
             ttl,
             limit,
+            storage
           },
         ]
       },
