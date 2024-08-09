@@ -1,4 +1,5 @@
-export interface Post{
+export interface Posts{
+    id: string,
     title?: string,
     tags?: [String],
     url?: String

@@ -6,7 +6,6 @@ import { HttpService } from '@nestjs/axios';
 import * as path from 'path';
 import configuration from '../config/configuration';
 import { of } from 'rxjs';
-import { Post } from '../interfaces/post';
 
 
 describe('Posts Service', () => {

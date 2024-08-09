@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosResponse } from 'axios';
 import { catchError, firstValueFrom, map, Observable } from 'rxjs';
-import { Post } from '../interfaces/post';
+import { Posts } from '../interfaces/posts';
 
 @Injectable()
 export class PostsService {
@@ -12,8 +12,10 @@ export class PostsService {
         private readonly httpService: HttpService
     ) {}
  
-
-     async get(fields: Array<string>, include: Array<string>): Promise<Post[]> {
+    updateCache(): void {
+        console.log("updating cache....");
+    }
+     async get(fields: Array<string>, include: Array<string>): Promise<Posts[]> {
         const url = this.buildUrl(fields, include)
         const INDEX_TAG_FORMAT = 'index-'; //index-{number}
         const LEVEL_TAG_FORMAT = 'level-'; //level-{number}
@@ -22,9 +24,9 @@ export class PostsService {
         //TODO: add this to .env?
         const headers = {
             'Accept-Version': 'v5.0',
-          };
+        };
         const { data } = await firstValueFrom(
-            this.httpService.get<Post[]>(url, { headers }).pipe(
+            this.httpService.get<Posts[]>(url, { headers }).pipe(
                 catchError((error) => {
                     console.error('Error connecting to Ghost:', error.message);
                     throw error;
@@ -34,7 +36,8 @@ export class PostsService {
         
         if (Array.isArray(data['posts'])){
             postData = data['posts'].map((post)=>{
-                return { 
+                return {
+                    id: post['id'],
                     index: this.getIndexFrom(post['tags'], INDEX_TAG_FORMAT),
                     title: post['title'],
                     level: this.getFirstTagWithPatther(post['tags'], LEVEL_TAG_FORMAT),
