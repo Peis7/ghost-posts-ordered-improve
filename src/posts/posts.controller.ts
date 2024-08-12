@@ -3,6 +3,7 @@ import { PostsService } from './posts.service';
 import { Posts } from '../interfaces/posts';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { PostWebhookPayload } from '../interfaces/postwebhookpayload';
+import { FIELDS, INCLUDE } from './constants/ghost';
 
 @UseGuards(ThrottlerGuard)
 @Controller('v1/posts')
@@ -11,7 +12,7 @@ export class PostsController {
 
   @Get('/')
   async findAll(): Promise<Posts[]>   {
-    return this.postsService.getPostDataAndUpdateCache(['title','url','featured','published_at'],['tags']);
+    return this.postsService.getPostDataAndUpdateCache(FIELDS, INCLUDE);
   }
 
   @Post('/updatecache')
@@ -36,6 +37,6 @@ export class PostsController {
       }
   };
 
-    this.postsService.updateCache();
+    this.postsService.updateCache(parsedBody);
   }
 }
