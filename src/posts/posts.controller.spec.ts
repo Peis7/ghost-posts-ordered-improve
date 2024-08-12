@@ -8,6 +8,7 @@ import { HttpService } from '@nestjs/axios';
 import { Posts } from '../interfaces/posts';
 import * as path from 'path';
 import configuration from '../config/configuration';
+import { FIELDS, INCLUDE } from './constants/ghost';
 
 
 describe('PostsController', () => {
@@ -19,8 +20,8 @@ describe('PostsController', () => {
     jest.clearAllMocks();
     const mockPostsService = {
       getPostDataAndUpdateCache: jest.fn().mockResolvedValue([
-        { id: '1', title: 'Post 1', url: 'url1', featured: true, published_at: new Date('1990-02-20T20:11:10.230Z'), tags: ['tag1'] },
-        { id: '2', title: 'Post 2', url: 'url2', featured: false, published_at: new Date('1960-06-29T20:11:10.230Z'), tags: ['tag2'] },
+        { id: '1', title: 'Post 1', url: 'url1', featured: true, slug:'p1', published_at: new Date('1990-02-20T20:11:10.230Z'), tags: ['tag1'] },
+        { id: '2', title: 'Post 2', url: 'url2', featured: false, slug:'p2', published_at: new Date('1960-06-29T20:11:10.230Z'), tags: ['tag2'] },
       ] as Posts[]),
     };
     
@@ -69,9 +70,9 @@ describe('PostsController', () => {
     const result = await controller.findAll();
 
     expect(result).toEqual([
-      {  id: '1', title: 'Post 1', url: 'url1', featured: true, published_at: new Date('1990-02-20T20:11:10.230Z'), tags: ['tag1'] },
-      {  id: '2', title: 'Post 2', url: 'url2', featured: false, published_at: new Date('1960-06-29T20:11:10.230Z'), tags: ['tag2'] },
+      {  id: '1', title: 'Post 1', url: 'url1', featured: true, slug:'p1', published_at: new Date('1990-02-20T20:11:10.230Z'), tags: ['tag1'] },
+      {  id: '2', title: 'Post 2', url: 'url2', featured: false, slug:'p2', published_at: new Date('1960-06-29T20:11:10.230Z'), tags: ['tag2'] },
     ]);
-    expect(postsService.getPostDataAndUpdateCache).toHaveBeenCalledWith(['title', 'url', 'featured', 'published_at'], ['tags']);
+    expect(postsService.getPostDataAndUpdateCache).toHaveBeenCalledWith(FIELDS, INCLUDE);
   });
 });

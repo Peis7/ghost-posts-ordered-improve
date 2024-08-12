@@ -6,6 +6,10 @@ import { catchError, firstValueFrom, map, Observable } from 'rxjs';
 import { Posts } from '../interfaces/posts';
 import { RedisService } from '../redis/redis.service';
 import { POST_ORDER_DATA_KEY } from '../cache/constants';
+import { PostWebhookPayload } from '../interfaces/postwebhookpayload';
+import { GHOST_POST_FIELD }  from './interfaces/postfields'
+import { INDEX_TAG_FORMAT, LEVEL_TAG_FORMAT, NO_MENU_TAG } from './constants/ghost';
+
 
 @Injectable()
 export class PostsService {
@@ -14,11 +18,31 @@ export class PostsService {
         private readonly httpService: HttpService,
         private redisService: RedisService
     ) {}
-    
-    updateCache(): void {
-        console.log("updating cache....");
+
+    updateCache(data: PostWebhookPayload): void {
+        const updatedPostId = data?.body?.post?.current?.id;
+        const slug =  data?.body?.post?.current?.slug;
+        const tags = data?.body?.post?.current?.tags;
         const cached = this.redisService.get(POST_ORDER_DATA_KEY);
-        cached.then(data=>console.log(data));
+
+        cached.then((data)=>{
+            let postData = JSON.parse(data);
+            postData = postData.map((post)=>{
+                if (post[GHOST_POST_FIELD.base.ID] === updatedPostId){
+                        let updatedPost = {
+                            ...post,
+                            index: tags ? this.getIndexFrom(tags, INDEX_TAG_FORMAT) : post[GHOST_POST_FIELD.calculated.INDEX],
+                            level: tags ? this.getFirstTagWithPatther(tags, LEVEL_TAG_FORMAT) : post[GHOST_POST_FIELD.calculated.LEVEL],
+                            no_menu: tags ? (this.getFirstTagWithPatther(tags, NO_MENU_TAG) ? true : false) : post[GHOST_POST_FIELD.calculated.NO_MENU],
+                            slug: slug || post[GHOST_POST_FIELD.base.SLUG]
+                        }
+                        return updatedPost;
+                }
+                return post;
+            });
+            this.redisService.set(POST_ORDER_DATA_KEY, JSON.stringify(postData));
+
+        });
     }
     async getPostDataAndUpdateCache(fields: Array<string>, include: Array<string>): Promise<Posts[]> {
         const postData = await this.get(fields, include);
@@ -27,9 +51,7 @@ export class PostsService {
     }
     private async get(fields: Array<string>, include: Array<string>): Promise<Posts[]> {
         const url = this.buildUrl(fields, include)
-        const INDEX_TAG_FORMAT = 'index-'; //index-{number}
-        const LEVEL_TAG_FORMAT = 'level-'; //level-{number}
-        const NO_MENU_TAG = 'no_menu'; //level-{number}
+
 
         //TODO: add this to .env?
         const headers = {
@@ -47,14 +69,15 @@ export class PostsService {
         if (Array.isArray(data['posts'])){
             postData = data['posts'].map((post)=>{
                 return {
-                    id: post['id'],
-                    index: this.getIndexFrom(post['tags'], INDEX_TAG_FORMAT),
-                    title: post['title'],
-                    level: this.getFirstTagWithPatther(post['tags'], LEVEL_TAG_FORMAT),
-                    no_menu: this.getFirstTagWithPatther(post['tags'], NO_MENU_TAG) ? true : false,
-                    url: post['url'],
-                    featured: post['featured'],
-                    new: this.isNew(post['published_at'])
+                    id: post[GHOST_POST_FIELD.base.ID],
+                    index: this.getIndexFrom(post[GHOST_POST_FIELD.base.TAGS], INDEX_TAG_FORMAT),
+                    title: post[GHOST_POST_FIELD.base.TITLE],
+                    level: this.getFirstTagWithPatther(post[GHOST_POST_FIELD.base.TAGS], LEVEL_TAG_FORMAT),
+                    no_menu: this.getFirstTagWithPatther(post[GHOST_POST_FIELD.base.TAGS], NO_MENU_TAG) ? true : false,
+                    url: post[GHOST_POST_FIELD.base.URL],
+                    slug: post[GHOST_POST_FIELD.base.SLUG],
+                    featured: post[GHOST_POST_FIELD.base.FEATURED],
+                    new: this.isNew(post[GHOST_POST_FIELD.base.PUBLISHED_AT])
                 }
             })
         }
