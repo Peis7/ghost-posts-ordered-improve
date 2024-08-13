@@ -1,14 +1,13 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AxiosResponse } from 'axios';
-import { catchError, firstValueFrom, map, Observable } from 'rxjs';
+import { catchError, firstValueFrom } from 'rxjs';
 import { Posts } from '../interfaces/posts';
 import { RedisService } from '../redis/redis.service';
-import { POST_ORDER_DATA_KEY } from '../cache/constants';
 import { PostWebhookPayload } from '../interfaces/postwebhookpayload';
 import { GHOST_POST_FIELD }  from './interfaces/postfields'
 import { INDEX_TAG_FORMAT, LEVEL_TAG_FORMAT, NO_MENU_TAG } from './constants/ghost';
+import { TechStack } from './enums/techOptions';
 
 
 @Injectable()
@@ -23,7 +22,9 @@ export class PostsService {
         const updatedPostId = data?.body?.post?.current?.id;
         const slug =  data?.body?.post?.current?.slug;
         const tags = data?.body?.post?.current?.tags;
-        const cached = this.redisService.get(POST_ORDER_DATA_KEY);
+        const tech:TechStack = TechStack.Python;
+
+        const cached = this.redisService.get(tech);
 
         cached.then((data)=>{
             let postData = JSON.parse(data);
@@ -40,13 +41,13 @@ export class PostsService {
                 }
                 return post;
             });
-            this.redisService.set(POST_ORDER_DATA_KEY, JSON.stringify(postData));
+            this.redisService.set(tech, JSON.stringify(postData));
 
         });
     }
-    async getPostDataAndUpdateCache(fields: Array<string>, include: Array<string>): Promise<Posts[]> {
+    async getPostDataAndUpdateCache( tech: TechStack,fields: Array<string>, include: Array<string>): Promise<Posts[]> {
         const postData = await this.get(fields, include);
-        this.setCache(POST_ORDER_DATA_KEY, JSON.stringify(postData))
+        this.setCache(tech, JSON.stringify(postData))
         return postData;
     }
     private async get(fields: Array<string>, include: Array<string>): Promise<Posts[]> {

@@ -8,6 +8,9 @@ import configuration from '../config/configuration';
 import { of } from 'rxjs';
 import { RedisService } from '../redis/redis.service';
 import { createMock } from '@golevelup/ts-jest';
+import { POST_ORDER_DATA_KEY } from '../cache/constants';
+import { Posts } from '../interfaces/posts';
+import { TechStack } from './enums/techOptions';
 
 
 describe('Posts Service', () => {
@@ -15,6 +18,8 @@ describe('Posts Service', () => {
   let mockHttpService: { get: jest.Mock };
   const ENV = process.env.NODE_ENV;
   let mockPosts = [];
+  let mockPostsProcessedResult= [];
+  let redisService: RedisService;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -25,12 +30,50 @@ describe('Posts Service', () => {
 
     //TODO: move mock data outside
     mockPosts = [
-      { title: 'Post 1', url: 'url1', featured: true, published_at: new Date('1990-02-20T20:11:10.230Z'), 
+      { id: '1',title: 'Post 1', url: 'url1', slug: 'slug1', featured: true, published_at: new Date('1990-02-20T20:11:10.230Z'), 
           tags: [{ name: 'index-1' }, { name: 'no_menu' }] },
-      { title: 'Post 2', url: 'url2', featured: false, published_at: new Date('1960-06-29T20:11:10.230Z'), 
+      { id: '2', title: 'Post 2', url: 'url2', slug: 'slug2', featured: false, published_at: new Date('1960-06-29T20:11:10.230Z'), 
           tags: [{ name: 'index-100' }] },
-          { title: 'Post 3', url: 'url3', featured: false, published_at: new Date('1958-06-29T20:11:10.230Z'), 
-            tags: [{ name: 'index-50' }] },
+      { id: '3', title: 'Post 3', url: 'url3', slug: 'slug3', featured: false, published_at: new Date('1958-06-29T20:11:10.230Z'), 
+        tags: [{ name: 'index-50' }] },
+    ] as Posts[];
+
+    mockPostsProcessedResult = [
+      {
+        id: '1',
+        index: 1,
+        title: 'Post 1',
+        level: null,
+        no_menu: true,
+        url: 'url1',
+        slug: 'slug1',
+        featured: true,
+        new: false
+
+    },
+    {
+      id: '2',
+      index: 100,
+      title: 'Post 2',
+      level: null,
+      no_menu: false,
+      url: 'url2',
+      slug: 'slug2',
+      featured: false,
+      new: false
+    },
+    {
+      id: '3',
+      index: 50,
+      title: 'Post 3',
+      level: null,
+      no_menu: false,
+      url: 'url3',
+      slug: 'slug3',
+      featured: false,
+      new: false
+    }
+,
     ];
 
     mockHttpService.get.mockReturnValue(of({ data: { posts: mockPosts } }));
@@ -67,7 +110,8 @@ describe('Posts Service', () => {
         },
       ]
     }).compile();
-
+ 
+    redisService = module.get<RedisService>(RedisService);
     service = module.get<PostsService>(PostsService);
   });
 
@@ -80,7 +124,8 @@ describe('Posts Service', () => {
     const getFirstTagWithPattherSpy = jest.spyOn(service as any, 'getFirstTagWithPatther');
     const getIndexFromSpy = jest.spyOn(service as any, 'getIndexFrom');
     const buildUrlSpy = jest.spyOn(service as any, 'buildUrl');
-    const posts = await service.getPostDataAndUpdateCache([], []);
+    const tech: TechStack = TechStack.Python;
+    const posts = await service.getPostDataAndUpdateCache(tech, [], []);
 
     expect(isNewSpy).toHaveBeenCalledTimes(posts.length);
     expect(getFirstTagWithPattherSpy).toHaveBeenCalledTimes(posts.length*2);
@@ -90,40 +135,27 @@ describe('Posts Service', () => {
 
   it('should return an array of posts', async () => {
     const spyGet = jest.spyOn(service, 'getPostDataAndUpdateCache');
-    const result = await service.getPostDataAndUpdateCache(['some'], ['value']);
+    const tech: TechStack = TechStack.Python;
+    const result = await service.getPostDataAndUpdateCache(tech, ['some'], ['value']);
 
-    expect(result).toEqual([
-      {
-          index: 1,
-          title: 'Post 1',
-          level: null,
-          no_menu: true,
-          url: 'url1',
-          featured: true,
-          new: false
+    expect(result).toEqual(mockPostsProcessedResult);
+    expect(spyGet).toHaveBeenCalledWith(tech, ['some'], ['value'] );
+  });
 
-      },
-      {
-        index: 100,
-        title: 'Post 2',
-        level: null,
-        no_menu: false,
-        url: 'url2',
-        featured: false,
-        new: false
-      },
-      {
-        index: 50,
-        title: 'Post 3',
-        level: null,
-        no_menu: false,
-        url: 'url3',
-        featured: false,
-        new: false
-      }
-,
-    ]);
-    expect(spyGet).toHaveBeenCalledWith( ['some'], ['value'] );
+  it('should update cache when quering posts', async () => {
+    const setCacheSpy = jest.spyOn(redisService, 'set');
+    const spySetCahce = jest.spyOn(service as any, 'setCache');
+    const tech: TechStack = TechStack.Python;
+    const postData = await service.getPostDataAndUpdateCache(tech, ['some'], ['value']);
+
+    expect(spySetCahce).toHaveBeenCalledTimes(1);
+    expect(spySetCahce).toHaveBeenCalledWith(tech, JSON.stringify(mockPostsProcessedResult));
+
+    expect(setCacheSpy).toHaveBeenCalledTimes(1);
+    expect(setCacheSpy).toHaveBeenCalledWith(tech, JSON.stringify(mockPostsProcessedResult));
+    const cachedValue = await redisService.get(tech);
+    expect(cachedValue).toBeTruthy();
+    expect(postData).toStrictEqual(mockPostsProcessedResult);
   });
 });
 
