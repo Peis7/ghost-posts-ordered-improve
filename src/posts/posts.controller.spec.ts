@@ -9,6 +9,7 @@ import { Posts } from '../interfaces/posts';
 import * as path from 'path';
 import configuration from '../config/configuration';
 import { FIELDS, INCLUDE } from './constants/ghost';
+import { TechStack } from './enums/techOptions';
 
 
 describe('PostsController', () => {
@@ -20,8 +21,8 @@ describe('PostsController', () => {
     jest.clearAllMocks();
     const mockPostsService = {
       getPostDataAndUpdateCache: jest.fn().mockResolvedValue([
-        { id: '1', title: 'Post 1', url: 'url1', featured: true, slug:'p1', published_at: new Date('1990-02-20T20:11:10.230Z'), tags: ['tag1'] },
-        { id: '2', title: 'Post 2', url: 'url2', featured: false, slug:'p2', published_at: new Date('1960-06-29T20:11:10.230Z'), tags: ['tag2'] },
+        { id: '1', title: 'Post 1', url: 'url1', featured: true, slug:'p1', published_at: new Date('1990-02-20T20:11:10.230Z'), tags: [{ name:'tag1' }] },
+        { id: '2', title: 'Post 2', url: 'url2', featured: false, slug:'p2', published_at: new Date('1960-06-29T20:11:10.230Z'), tags: [{ name:'tag2' }] },
       ] as Posts[]),
     };
     
@@ -67,12 +68,29 @@ describe('PostsController', () => {
   });
 
   it('should return an array of posts', async () => {
-    const result = await controller.findAll();
+    const request = {
+      body: { tech: TechStack.Python.toString() },
+    } as unknown as Request;
+    const result = await controller.getCourseStructure(request);
 
     expect(result).toEqual([
-      {  id: '1', title: 'Post 1', url: 'url1', featured: true, slug:'p1', published_at: new Date('1990-02-20T20:11:10.230Z'), tags: ['tag1'] },
-      {  id: '2', title: 'Post 2', url: 'url2', featured: false, slug:'p2', published_at: new Date('1960-06-29T20:11:10.230Z'), tags: ['tag2'] },
+      {  id: '1', title: 'Post 1', url: 'url1', featured: true, slug:'p1', published_at: new Date('1990-02-20T20:11:10.230Z'), tags: [{ name: 'tag1' }] },
+      {  id: '2', title: 'Post 2', url: 'url2', featured: false, slug:'p2', published_at: new Date('1960-06-29T20:11:10.230Z'), tags: [{ name: 'tag2' }] },
     ]);
-    expect(postsService.getPostDataAndUpdateCache).toHaveBeenCalledWith(FIELDS, INCLUDE);
+    expect(postsService.getPostDataAndUpdateCache).toHaveBeenCalledWith(TechStack.Python,FIELDS, INCLUDE);
   });
+
+  it('should return an empty array when invalid tech is provided', async () => {
+    // Create a mock request object with invalid tech
+    const request = {
+        body: { tech: 'InvalidTech' },
+    } as unknown as Request;
+
+    // Call the controller method
+    const result = await controller.getCourseStructure(request);
+
+    // Assert the result
+    expect(result).toEqual([]);
+    expect(postsService.getPostDataAndUpdateCache).not.toHaveBeenCalled();
+});
 });

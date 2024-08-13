@@ -1,7 +1,9 @@
 export interface Posts{
     id?: string,
     title?: string,
-    tags?: [String],
+    tags?: [
+        { name?: string }
+    ],
     url?: String,
     slug?: string,
     featured?: Boolean,
