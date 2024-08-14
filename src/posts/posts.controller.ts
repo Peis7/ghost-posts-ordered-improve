@@ -4,7 +4,7 @@ import { Posts } from '../interfaces/posts';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { PostWebhookPayload } from '../interfaces/postwebhookpayload';
 import { FIELDS, INCLUDE } from './constants/ghost';
-import { isTechStack } from './enums/techOptions';
+import { isTechStack } from './enums/techStack';
 import { getCourseStructureBody } from './interfaces/getCourseStructureRequest';
 
 @UseGuards(ThrottlerGuard)

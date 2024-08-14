@@ -10,7 +10,8 @@ import { RedisService } from '../redis/redis.service';
 import { createMock } from '@golevelup/ts-jest';
 import { POST_ORDER_DATA_KEY } from '../cache/constants';
 import { Posts } from '../interfaces/posts';
-import { TechStack } from './enums/techOptions';
+import { TechStack } from './enums/techStack';
+import { TestTechStacks } from './test/data';
 
 
 describe('Posts Service', () => {
@@ -20,6 +21,9 @@ describe('Posts Service', () => {
   let mockPosts = [];
   let mockPostsProcessedResult= [];
   let redisService: RedisService;
+
+
+  const inMemoryCache = new Map<string, string>();
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -113,49 +117,63 @@ describe('Posts Service', () => {
  
     redisService = module.get<RedisService>(RedisService);
     service = module.get<PostsService>(PostsService);
+
+    // Mock Redis methods to use in-memory cache
+    jest.spyOn(redisService, 'set').mockImplementation((key: string, value: string) => {
+      inMemoryCache.set(key, value);
+      return Promise.resolve(value); // Assuming 'set' method returns a Promise<boolean>
+    });
+
+    jest.spyOn(redisService, 'get').mockImplementation((key: string) => {
+      const value = inMemoryCache.get(key);
+      return Promise.resolve(value); // Assuming 'get' method returns a Promise<string>
+    });
+    
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
-  it('should return an array of posts', async () => {
-    const isNewSpy = jest.spyOn(service as any, 'isNew');
-    const getFirstTagWithPattherSpy = jest.spyOn(service as any, 'getFirstTagWithPatther');
-    const getIndexFromSpy = jest.spyOn(service as any, 'getIndexFrom');
-    const buildUrlSpy = jest.spyOn(service as any, 'buildUrl');
-    const tech: TechStack = TechStack.Python;
-    const posts = await service.getPostDataAndUpdateCache(tech, [], []);
 
-    expect(isNewSpy).toHaveBeenCalledTimes(posts.length);
-    expect(getFirstTagWithPattherSpy).toHaveBeenCalledTimes(posts.length*2);
-    expect(getIndexFromSpy).toHaveBeenCalledTimes(posts.length);
-    expect(buildUrlSpy).toHaveBeenCalledWith([],[]);
-  });
 
-  it('should return an array of posts', async () => {
-    const spyGet = jest.spyOn(service, 'getPostDataAndUpdateCache');
-    const tech: TechStack = TechStack.Python;
-    const result = await service.getPostDataAndUpdateCache(tech, ['some'], ['value']);
+  TestTechStacks.forEach((tech) => {
+    it(`should get course posts array and update cache: ${tech}`, async () => {
+      const isNewSpy = jest.spyOn(service as any, 'isNew');
+      const getFirstTagWithPattherSpy = jest.spyOn(service as any, 'getFirstTagWithPatther');
+      const getIndexFromSpy = jest.spyOn(service as any, 'getIndexFrom');
+      const buildUrlSpy = jest.spyOn(service as any, 'buildUrl');
+      const posts = await service.getPostDataAndUpdateCache(tech, [], []);
 
-    expect(result).toEqual(mockPostsProcessedResult);
-    expect(spyGet).toHaveBeenCalledWith(tech, ['some'], ['value'] );
-  });
+      expect(isNewSpy).toHaveBeenCalledTimes(posts.length);
+      expect(getFirstTagWithPattherSpy).toHaveBeenCalledTimes(posts.length*2);
+      expect(getIndexFromSpy).toHaveBeenCalledTimes(posts.length);
+      expect(buildUrlSpy).toHaveBeenCalledWith([],[]);
+    });
 
-  it('should update cache when quering posts', async () => {
-    const setCacheSpy = jest.spyOn(redisService, 'set');
-    const spySetCahce = jest.spyOn(service as any, 'setCache');
-    const tech: TechStack = TechStack.Python;
-    const postData = await service.getPostDataAndUpdateCache(tech, ['some'], ['value']);
+    it('should return an array of posts', async () => {
+      const spyGet = jest.spyOn(service, 'getPostDataAndUpdateCache');
+      const result = await service.getPostDataAndUpdateCache(tech, ['some'], ['value']);
 
-    expect(spySetCahce).toHaveBeenCalledTimes(1);
-    expect(spySetCahce).toHaveBeenCalledWith(tech, JSON.stringify(mockPostsProcessedResult));
+      expect(result).toEqual(mockPostsProcessedResult);
+      expect(spyGet).toHaveBeenCalledWith(tech, ['some'], ['value'] );
+    });
 
-    expect(setCacheSpy).toHaveBeenCalledTimes(1);
-    expect(setCacheSpy).toHaveBeenCalledWith(tech, JSON.stringify(mockPostsProcessedResult));
-    const cachedValue = await redisService.get(tech);
-    expect(cachedValue).toBeTruthy();
-    expect(postData).toStrictEqual(mockPostsProcessedResult);
+    it(`should update cache data for course of ${tech}`, async () => {
+      const setCacheSpy = jest.spyOn(redisService, 'set');
+      const spySetCahce = jest.spyOn(service as any, 'setCache');
+      const postData = await service.getPostDataAndUpdateCache(tech, ['some'], ['value']);
+
+      expect(spySetCahce).toHaveBeenCalledTimes(1);
+      expect(spySetCahce).toHaveBeenCalledWith(tech, JSON.stringify(mockPostsProcessedResult));
+
+      expect(setCacheSpy).toHaveBeenCalledTimes(1);
+      expect(setCacheSpy).toHaveBeenCalledWith(tech, JSON.stringify(mockPostsProcessedResult));
+      const cachedValue = await redisService.get(tech);
+      expect(cachedValue).toBeTruthy();
+      expect(cachedValue).toBe(JSON.stringify(mockPostsProcessedResult));
+      expect(postData).toStrictEqual(mockPostsProcessedResult);
+    });
   });
 });
 
