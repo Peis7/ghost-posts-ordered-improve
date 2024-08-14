@@ -143,26 +143,26 @@ describe('Posts Service', () => {
       const getFirstTagWithPattherSpy = jest.spyOn(service as any, 'getFirstTagWithPatther');
       const getIndexFromSpy = jest.spyOn(service as any, 'getIndexFrom');
       const buildUrlSpy = jest.spyOn(service as any, 'buildUrl');
-      const posts = await service.getPostDataAndUpdateCache(tech, [], []);
+      const posts = await service.getPostDataAndUpdateCache(tech, [], [], []);
 
       expect(isNewSpy).toHaveBeenCalledTimes(posts.length);
       expect(getFirstTagWithPattherSpy).toHaveBeenCalledTimes(posts.length*2);
       expect(getIndexFromSpy).toHaveBeenCalledTimes(posts.length);
-      expect(buildUrlSpy).toHaveBeenCalledWith([],[]);
+      expect(buildUrlSpy).toHaveBeenCalledWith([],[],[]);
     });
 
     it('should return an array of posts', async () => {
       const spyGet = jest.spyOn(service, 'getPostDataAndUpdateCache');
-      const result = await service.getPostDataAndUpdateCache(tech, ['some'], ['value']);
+      const result = await service.getPostDataAndUpdateCache(tech, ['some'], ['value'], [['tag','python']]);
 
       expect(result).toEqual(mockPostsProcessedResult);
-      expect(spyGet).toHaveBeenCalledWith(tech, ['some'], ['value'] );
+      expect(spyGet).toHaveBeenCalledWith(tech, ['some'], ['value'], [['tag','python']] );
     });
 
     it(`should update cache data for course of ${tech}`, async () => {
       const setCacheSpy = jest.spyOn(redisService, 'set');
       const spySetCahce = jest.spyOn(service as any, 'setCache');
-      const postData = await service.getPostDataAndUpdateCache(tech, ['some'], ['value']);
+      const postData = await service.getPostDataAndUpdateCache(tech, ['some'], ['value'],[['tag','python']]);
 
       expect(spySetCahce).toHaveBeenCalledTimes(1);
       expect(spySetCahce).toHaveBeenCalledWith(tech, JSON.stringify(mockPostsProcessedResult));
