@@ -25,15 +25,13 @@ export class PostsService {
         const slug =  data?.body?.post?.current?.slug;
         const tags = data?.body?.post?.current?.tags;
 
-        console.log(data?.body?.post?.current);
-        console.log(data?.body?.post?.previous);
         const techStackString: string | boolean = this.getTechFromTags(data?.body?.post?.current?.tags);
 
    
         const tech: TechStack | undefined = TechStack[techStackString as keyof typeof TechStack];
 
         if (!tech) return; //TODO: return a meaninful message
-  
+        
         const cached = this.redisService.get(tech);
 
         if (!cached) return;
@@ -42,6 +40,7 @@ export class PostsService {
         cached.then((data)=>{
             if (!data) return;
             let postData = JSON.parse(data);
+            if (!(postData instanceof Array)) return;
             postData = postData.map((post)=>{
                 if (post[GHOST_POST_FIELD.base.ID] === updatedPostId){
                         let updatedPost = {
@@ -53,19 +52,49 @@ export class PostsService {
                         }
                         return updatedPost;
                 }
-                return post;
+                return post; 
             });
-            console.log(postData);
             this.redisService.set(tech, JSON.stringify(postData));
 
         });
+    }
+    async handlePublished(post: Posts): Promise<void>{
+        const techStackString: string | boolean = this.getTechFromTags(post[GHOST_POST_FIELD.base.TAGS]);
+        const tech: TechStack | undefined = TechStack[techStackString as keyof typeof TechStack];
+
+        if (!tech) return; //TODO: return a meaninful message
+        const publishedPostFormatedData = {
+            id: post[GHOST_POST_FIELD.base.ID],
+            index: this.getIndexFrom(post[GHOST_POST_FIELD.base.TAGS], INDEX_TAG_FORMAT),
+            title: post[GHOST_POST_FIELD.base.TITLE],
+            level: this.getFirstTagWithPatther(post[GHOST_POST_FIELD.base.TAGS], LEVEL_TAG_FORMAT),
+            no_menu: this.getFirstTagWithPatther(post[GHOST_POST_FIELD.base.TAGS], NO_MENU_TAG) ? true : false,
+            url: post[GHOST_POST_FIELD.base.URL],
+            slug: post[GHOST_POST_FIELD.base.SLUG],
+            featured: post[GHOST_POST_FIELD.base.FEATURED],
+            new: this.isNew(post[GHOST_POST_FIELD.base.PUBLISHED_AT])
+        }
+        const cachedCourseStructure = await this.redisService.get(tech);
+        let cachedPosts:Posts[] = []
+        if (cachedCourseStructure){
+            cachedPosts = JSON.parse(cachedCourseStructure) as Posts[];
+        }
+        cachedPosts.push(publishedPostFormatedData);
+        this.setCache(tech, JSON.stringify(cachedPosts));
     }
     private getTechFromTags(tags: Array<Tag>): string | boolean {
         if (tags.length == 0 ) return false;
         let mainTag = tags[0];
         return (mainTag.name && isTechStack(mainTag.name)) ? mainTag.name : false;
     }
+
+    private async clearMalformedCourseStructure( tech: TechStack){
+        const cachedData = await this.redisService.get(tech);
+        let parsedData = JSON.parse(cachedData);
+        if (!(parsedData instanceof Array)) this.redisService.delete(tech);
+    }
     async getPostDataAndUpdateCache( tech: TechStack,fields: Array<string>, include: Array<string>, filter: ArrayOfStringPairs): Promise<Posts[]> {
+        this.clearMalformedCourseStructure(tech);
         const cachedCourseStructure = await this.redisService.get(tech);
         if (cachedCourseStructure){
             return JSON.parse(cachedCourseStructure) as Posts[];
