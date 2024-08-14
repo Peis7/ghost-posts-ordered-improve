@@ -1,11 +1,10 @@
 export interface Posts{
     id?: string,
     title?: string,
-    tags?: [
-        { name?: string }
-    ],
+    tags?: 
+        { name?: string }[],
     url?: String,
     slug?: string,
     featured?: Boolean,
-    published_at: Date,
+    published_at?: Date,
 }

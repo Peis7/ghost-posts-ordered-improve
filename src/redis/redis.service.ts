@@ -24,5 +24,10 @@ export class RedisService {
 
   async disconnect() {
     await this.redisClient.disconnect();
+    this.redisClient.del
+  }
+
+  async delete(key: string) {
+    await this.redisClient.del(key);
   }
 }
