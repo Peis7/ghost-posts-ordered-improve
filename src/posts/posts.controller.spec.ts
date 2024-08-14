@@ -9,7 +9,7 @@ import { Posts } from '../interfaces/posts';
 import * as path from 'path';
 import configuration from '../config/configuration';
 import { FIELDS, INCLUDE } from './constants/ghost';
-import { TechStack } from './enums/techOptions';
+import { TechStack } from './enums/techStack';
 
 
 describe('PostsController', () => {

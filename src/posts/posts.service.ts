@@ -7,7 +7,7 @@ import { RedisService } from '../redis/redis.service';
 import { PostWebhookPayload } from '../interfaces/postwebhookpayload';
 import { GHOST_POST_FIELD }  from './interfaces/postfields'
 import { INDEX_TAG_FORMAT, LEVEL_TAG_FORMAT, NO_MENU_TAG } from './constants/ghost';
-import { TechStack } from './enums/techOptions';
+import { TechStack } from './enums/techStack';
 
 
 @Injectable()
