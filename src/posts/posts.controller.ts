@@ -25,7 +25,6 @@ export class PostsController {
 
   @Post('/updatecache')
   async updateCache(@Req() request: Request): Promise<void>   {
-    console.log('......updateCache');
     const { body } = request as PostWebhookPayload;
     
     const parsedBody: PostWebhookPayload = {
@@ -49,10 +48,15 @@ export class PostsController {
 
   @Post('/published')
   async handlePublished(@Req() request: Request): Promise<void>   {
-    console.log('.....handlePublished');
     const { body } = request as PostWebhookPayload;
     const post:Posts = body?.post?.current;
     this.postsService.handlePublished(post);
   }
 
+  @Post('/unpublished')
+  async handleUnublished(@Req() request: Request): Promise<void>   {
+    const { body } = request as PostWebhookPayload;
+    const post:Posts = body?.post?.current;
+    this.postsService.handleUnpublished(post);
+  }
 }

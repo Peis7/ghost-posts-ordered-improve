@@ -20,7 +20,7 @@ export class PostsService {
         private redisService: RedisService
     ) {}
 
-    updateCache(data: PostWebhookPayload): void {
+    async updateCache(data: PostWebhookPayload): Promise<void> {
         const updatedPostId = data?.body?.post?.current?.id;
         const slug =  data?.body?.post?.current?.slug;
         const tags = data?.body?.post?.current?.tags;
@@ -32,32 +32,43 @@ export class PostsService {
 
         if (!tech) return; //TODO: return a meaninful message
         
-        const cached = this.redisService.get(tech);
+        const cached = await this.redisService.get(tech);
 
         if (!cached) return;
 
         //so far, we know that there is data
-        cached.then((data)=>{
-            if (!data) return;
-            let postData = JSON.parse(data);
-            if (!(postData instanceof Array)) return;
-            postData = postData.map((post)=>{
-                if (post[GHOST_POST_FIELD.base.ID] === updatedPostId){
-                        let updatedPost = {
-                            ...post,
-                            index: tags ? this.getIndexFrom(tags, INDEX_TAG_FORMAT) : post[GHOST_POST_FIELD.calculated.INDEX],
-                            level: tags ? this.getFirstTagWithPatther(tags, LEVEL_TAG_FORMAT) : post[GHOST_POST_FIELD.calculated.LEVEL],
-                            no_menu: tags ? (this.getFirstTagWithPatther(tags, NO_MENU_TAG) ? true : false) : post[GHOST_POST_FIELD.calculated.NO_MENU],
-                            slug: slug || post[GHOST_POST_FIELD.base.SLUG]
-                        }
-                        return updatedPost;
-                }
-                return post; 
-            });
-            this.redisService.set(tech, JSON.stringify(postData));
 
+        let postData = JSON.parse(cached);
+        if (!(postData instanceof Array)) return;
+        postData = postData.map((post)=>{
+            if (post[GHOST_POST_FIELD.base.ID] === updatedPostId){
+                    let updatedPost = {
+                        ...post,
+                        index: tags ? this.getIndexFrom(tags, INDEX_TAG_FORMAT) : post[GHOST_POST_FIELD.calculated.INDEX],
+                        level: tags ? this.getFirstTagWithPatther(tags, LEVEL_TAG_FORMAT) : post[GHOST_POST_FIELD.calculated.LEVEL],
+                        no_menu: tags ? (this.getFirstTagWithPatther(tags, NO_MENU_TAG) ? true : false) : post[GHOST_POST_FIELD.calculated.NO_MENU],
+                        slug: slug || post[GHOST_POST_FIELD.base.SLUG]
+                    }
+                    return updatedPost;
+            }
+            return post; 
         });
+
+        await this.redisService.set(tech, JSON.stringify(postData));
     }
+
+    async handleUnpublished(post: Posts): Promise<void>{
+        const techStackString: string | boolean = this.getTechFromTags(post[GHOST_POST_FIELD.base.TAGS]);
+        const tech: TechStack | undefined = TechStack[techStackString as keyof typeof TechStack];
+        const cached = await this.redisService.get(tech);
+        if (!cached) return;
+
+        let postData = JSON.parse(cached);
+        if (!(postData instanceof Array)) return;
+        postData = postData.filter((cachedpost)=> cachedpost[GHOST_POST_FIELD.base.ID] !== post[GHOST_POST_FIELD.base.ID] );
+        await this.redisService.set(tech, JSON.stringify(postData));
+    }
+
     async handlePublished(post: Posts): Promise<void>{
         const techStackString: string | boolean = this.getTechFromTags(post[GHOST_POST_FIELD.base.TAGS]);
         const tech: TechStack | undefined = TechStack[techStackString as keyof typeof TechStack];
@@ -88,8 +99,10 @@ export class PostsService {
         return (mainTag.name && isTechStack(mainTag.name)) ? mainTag.name : false;
     }
 
-    private async clearMalformedCourseStructure( tech: TechStack){
+    private async clearMalformedCourseStructure( tech: TechStack): Promise<void>{
         const cachedData = await this.redisService.get(tech);
+
+        if (!cachedData) return;
         let parsedData = JSON.parse(cachedData);
         if (!(parsedData instanceof Array)) this.redisService.delete(tech);
     }
@@ -105,7 +118,6 @@ export class PostsService {
     }
     private async get(fields: Array<string>, include: Array<string>, filter: ArrayOfStringPairs): Promise<Posts[]> {
         const url = this.buildUrl(fields, include, filter)
-
 
         //TODO: add this to .env?
         const headers = {
