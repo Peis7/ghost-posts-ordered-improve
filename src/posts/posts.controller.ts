@@ -3,9 +3,10 @@ import { PostsService } from './posts.service';
 import { Posts } from '../interfaces/posts';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { PostWebhookPayload } from '../interfaces/postwebhookpayload';
-import { FIELDS, INCLUDE } from './constants/ghost';
+import { FIELDS, BASE_FILTER, INCLUDE } from './constants/ghost';
 import { isTechStack } from './enums/techStack';
 import { getCourseStructureBody } from './interfaces/getCourseStructureRequest';
+import { ArrayOfStringPairs } from './types/custom';
 
 @UseGuards(ThrottlerGuard)
 @Controller('v1/posts')
@@ -16,8 +17,10 @@ export class PostsController {
   async getCourseStructure(@Req() request: Request): Promise<Posts[]>   {
     const { body } = request;
     const { tech } = body as getCourseStructureBody;
+    const filter: ArrayOfStringPairs = BASE_FILTER;
+    filter.push(['primary_tag',`[${tech.toLowerCase()}]`]);
     if (!isTechStack(tech)) return [];
-    return this.postsService.getPostDataAndUpdateCache(tech, FIELDS, INCLUDE);
+    return this.postsService.getPostDataAndUpdateCache(tech, FIELDS, INCLUDE, filter);
   }
 
   @Post('/updatecache')

@@ -7,7 +7,9 @@ import { RedisService } from '../redis/redis.service';
 import { PostWebhookPayload } from '../interfaces/postwebhookpayload';
 import { GHOST_POST_FIELD }  from './interfaces/postfields'
 import { INDEX_TAG_FORMAT, LEVEL_TAG_FORMAT, NO_MENU_TAG } from './constants/ghost';
-import { TechStack } from './enums/techStack';
+import { isTechStack, TechStack } from './enums/techStack';
+import { Tag } from '../interfaces/tags';
+import { ArrayOfStringPairs } from './types/custom';
 
 
 @Injectable()
@@ -22,11 +24,20 @@ export class PostsService {
         const updatedPostId = data?.body?.post?.current?.id;
         const slug =  data?.body?.post?.current?.slug;
         const tags = data?.body?.post?.current?.tags;
-        const tech:TechStack = TechStack.Python;
 
+        const techStackString: string | boolean = this.getTechFromTags(data?.body?.post?.current?.tags);
+
+   
+        const tech: TechStack | undefined = TechStack[techStackString as keyof typeof TechStack];
+
+        if (!tech) return; //TODO: return a meaninful message
+  
         const cached = this.redisService.get(tech);
 
+        if (!cached) return;
+
         cached.then((data)=>{
+            if (!data) return;
             let postData = JSON.parse(data);
             postData = postData.map((post)=>{
                 if (post[GHOST_POST_FIELD.base.ID] === updatedPostId){
@@ -45,13 +56,18 @@ export class PostsService {
 
         });
     }
-    async getPostDataAndUpdateCache( tech: TechStack,fields: Array<string>, include: Array<string>): Promise<Posts[]> {
-        const postData = await this.get(fields, include);
+    private getTechFromTags(tags: Array<Tag>): string | boolean{
+        if (tags.length == 0 ) return false;
+        let mainTag = tags[0];
+        return (mainTag.name && isTechStack(mainTag.name)) ? mainTag.name : false;
+    }
+    async getPostDataAndUpdateCache( tech: TechStack,fields: Array<string>, include: Array<string>, filter: ArrayOfStringPairs): Promise<Posts[]> {
+        const postData = await this.get(fields, include, filter);
         this.setCache(tech, JSON.stringify(postData))
         return postData;
     }
-    private async get(fields: Array<string>, include: Array<string>): Promise<Posts[]> {
-        const url = this.buildUrl(fields, include)
+    private async get(fields: Array<string>, include: Array<string>, filter: ArrayOfStringPairs): Promise<Posts[]> {
+        const url = this.buildUrl(fields, include, filter)
 
 
         //TODO: add this to .env?
@@ -113,7 +129,7 @@ export class PostsService {
         return indexArray.length > 0 ? indexArray[0] : -1;
     }
     
-    private buildUrl(fields: Array<string>, include: Array<string>): string {
+    private buildUrl(fields: Array<string>, include: Array<string>, filter: ArrayOfStringPairs): string {
         const baseUrl = `${this.getConfig('ghost.api_url')}:${this.getConfig('ghost.port')}`;
         const contentPath = this.getConfig('ghost.content_path');
         const apiKey = this.getConfig('ghost.content_api_key');
@@ -127,7 +143,12 @@ export class PostsService {
         if (fields.length > 0) {
             url.searchParams.append('fields', fields.join(','));
         }
-    
+        if (filter.length > 0) {
+            let filterOptions = filter.map(filter=>{
+                return filter.join(':');
+            })
+            url.searchParams.append('filter', filterOptions.join(','));
+        }
         return url.toString();
     }
 
