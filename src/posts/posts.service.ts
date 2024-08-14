@@ -25,6 +25,8 @@ export class PostsService {
         const slug =  data?.body?.post?.current?.slug;
         const tags = data?.body?.post?.current?.tags;
 
+        console.log(data?.body?.post?.current);
+        console.log(data?.body?.post?.previous);
         const techStackString: string | boolean = this.getTechFromTags(data?.body?.post?.current?.tags);
 
    
@@ -36,6 +38,7 @@ export class PostsService {
 
         if (!cached) return;
 
+        //so far, we know that there is data
         cached.then((data)=>{
             if (!data) return;
             let postData = JSON.parse(data);
@@ -52,16 +55,21 @@ export class PostsService {
                 }
                 return post;
             });
+            console.log(postData);
             this.redisService.set(tech, JSON.stringify(postData));
 
         });
     }
-    private getTechFromTags(tags: Array<Tag>): string | boolean{
+    private getTechFromTags(tags: Array<Tag>): string | boolean {
         if (tags.length == 0 ) return false;
         let mainTag = tags[0];
         return (mainTag.name && isTechStack(mainTag.name)) ? mainTag.name : false;
     }
     async getPostDataAndUpdateCache( tech: TechStack,fields: Array<string>, include: Array<string>, filter: ArrayOfStringPairs): Promise<Posts[]> {
+        const cachedCourseStructure = await this.redisService.get(tech);
+        if (cachedCourseStructure){
+            return JSON.parse(cachedCourseStructure) as Posts[];
+        }
         const postData = await this.get(fields, include, filter);
         this.setCache(tech, JSON.stringify(postData))
         return postData;
