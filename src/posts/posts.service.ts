@@ -57,7 +57,14 @@ export class PostsService {
         await this.redisService.set(tech, JSON.stringify(postData));
     }
 
+    async handleDeleted(post: Posts): Promise<void>{
+        return this.removePostFromCache(post);
+    }
     async handleUnpublished(post: Posts): Promise<void>{
+        return this.removePostFromCache(post);
+    }
+
+    private async removePostFromCache(post: Posts): Promise<void>{
         const techStackString: string | boolean = this.getTechFromTags(post[GHOST_POST_FIELD.base.TAGS]);
         const tech: TechStack | undefined = TechStack[techStackString as keyof typeof TechStack];
         const cached = await this.redisService.get(tech);
@@ -69,6 +76,7 @@ export class PostsService {
         
         postData = postData.filter((cachedpost)=> cachedpost[GHOST_POST_FIELD.base.ID] !== post[GHOST_POST_FIELD.base.ID] );
         await this.setCache(tech, JSON.stringify(postData));
+        return;
     }
 
     async handlePublished(post: Posts): Promise<void>{
