@@ -12,6 +12,7 @@ import { POST_ORDER_DATA_KEY } from '../cache/constants';
 import { Posts } from '../interfaces/posts';
 import { TechStack } from './enums/techStack';
 import { TestTechStacks } from './test/data';
+import { GHOST_POST_FIELD } from './interfaces/postfields';
 
 
 describe('Posts Service', () => {
@@ -28,6 +29,7 @@ describe('Posts Service', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
 
+    inMemoryCache.clear();
     mockHttpService = {
       get: jest.fn(),
     };
@@ -121,12 +123,12 @@ describe('Posts Service', () => {
     // Mock Redis methods to use in-memory cache
     jest.spyOn(redisService, 'set').mockImplementation((key: string, value: string) => {
       inMemoryCache.set(key, value);
-      return Promise.resolve(value); // Assuming 'set' method returns a Promise<boolean>
+      return Promise.resolve(value); 
     });
 
     jest.spyOn(redisService, 'get').mockImplementation((key: string) => {
       const value = inMemoryCache.get(key);
-      return Promise.resolve(value); // Assuming 'get' method returns a Promise<string>
+      return Promise.resolve(value);
     });
     
   });
@@ -144,7 +146,6 @@ describe('Posts Service', () => {
       const getIndexFromSpy = jest.spyOn(service as any, 'getIndexFrom');
       const buildUrlSpy = jest.spyOn(service as any, 'buildUrl');
       const posts = await service.getPostDataAndUpdateCache(tech, [], [], []);
-
       expect(isNewSpy).toHaveBeenCalledTimes(posts.length);
       expect(getFirstTagWithPattherSpy).toHaveBeenCalledTimes(posts.length*2);
       expect(getIndexFromSpy).toHaveBeenCalledTimes(posts.length);
@@ -154,7 +155,6 @@ describe('Posts Service', () => {
     it('should return an array of posts', async () => {
       const spyGet = jest.spyOn(service, 'getPostDataAndUpdateCache');
       const result = await service.getPostDataAndUpdateCache(tech, ['some'], ['value'], [['tag','python']]);
-
       expect(result).toEqual(mockPostsProcessedResult);
       expect(spyGet).toHaveBeenCalledWith(tech, ['some'], ['value'], [['tag','python']] );
     });
@@ -177,18 +177,48 @@ describe('Posts Service', () => {
     });
 
     it(`should return cached data and NOT update cache for course of ${tech}`, async () => {
-      const spySetCache = jest.spyOn(redisService, 'set');
-      const spyGetCache = jest.spyOn(redisService, 'get');
+      
+      await redisService.set(tech, JSON.stringify(mockPostsProcessedResult));
+      const spySet = jest.spyOn(redisService, 'set');
+      const spyGet = jest.spyOn(redisService, 'get');
       const spySetCahce = jest.spyOn(service as any, 'setCache');
       const postData = await service.getPostDataAndUpdateCache(tech, ['some'], ['value'],[['tag','python']]);
 
       expect(spySetCahce).toHaveBeenCalledTimes(0);
-      expect(spySetCache).toHaveBeenCalledTimes(0);
-      expect(spyGetCache).toHaveBeenCalledTimes(2);
+      expect(spySet).toHaveBeenCalledTimes(1);
+      expect(spyGet).toHaveBeenCalledTimes(2);
       const cachedValue = await redisService.get(tech);
       expect(cachedValue).toBeTruthy();
       expect(cachedValue).toBe(JSON.stringify(mockPostsProcessedResult));
       expect(postData).toStrictEqual(mockPostsProcessedResult);
+    });
+
+    it(`should add published post to course structure ${tech}`, async () => {
+      const spySet = jest.spyOn(redisService, 'set');
+      const spyGet = jest.spyOn(redisService, 'get');
+      const spyGetTechFromTags = jest.spyOn(service as any, 'getTechFromTags');
+      const spySetCahce = jest.spyOn(service as any, 'setCache');
+      const testPost = {...mockPosts[mockPosts.length - 1],id: '4', tags: [{name: tech} ]}; //get a copy of last test post to publish
+      const lengthBeforePublishedPost = inMemoryCache.size;
+      await service.handlePublished(testPost);
+      expect(spySetCahce).toHaveBeenCalledTimes(1);
+      expect(spyGetTechFromTags).toHaveBeenCalledTimes(1);
+      expect(spySet).toHaveBeenCalledTimes(1);
+      expect(inMemoryCache.size).toBe(lengthBeforePublishedPost + 1);
+    });
+
+    it(`should remove post from cache when post is unpublished and update cached value for: ${tech}`, async () => {
+      await redisService.set(tech, JSON.stringify(mockPostsProcessedResult));//set a value in cache
+      const spyGet = jest.spyOn(redisService, 'get');
+      const spySetCahce = jest.spyOn(service as any, 'setCache');
+      const testPost = mockPosts[mockPosts.length - 1]; //get a copy of last test post to upublish
+      testPost['tags'].unshift({name: tech});//add  the main tag [ index 0 ]
+      await service.handleUnpublished(testPost);
+      const cachedValueAfterUnpublished = await redisService.get(tech);
+      const expectedCourseStructure = mockPostsProcessedResult.filter((post)=>post[GHOST_POST_FIELD.base.ID] != testPost[GHOST_POST_FIELD.base.ID]);
+      expect(spySetCahce).toHaveBeenCalledTimes(1);
+      expect(spyGet).toHaveBeenCalledTimes(2);
+      expect(JSON.parse(cachedValueAfterUnpublished)).toStrictEqual(expectedCourseStructure);
     });
   });
 });

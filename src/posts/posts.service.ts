@@ -61,18 +61,19 @@ export class PostsService {
         const techStackString: string | boolean = this.getTechFromTags(post[GHOST_POST_FIELD.base.TAGS]);
         const tech: TechStack | undefined = TechStack[techStackString as keyof typeof TechStack];
         const cached = await this.redisService.get(tech);
+
         if (!cached) return;
 
         let postData = JSON.parse(cached);
         if (!(postData instanceof Array)) return;
+        
         postData = postData.filter((cachedpost)=> cachedpost[GHOST_POST_FIELD.base.ID] !== post[GHOST_POST_FIELD.base.ID] );
-        await this.redisService.set(tech, JSON.stringify(postData));
+        await this.setCache(tech, JSON.stringify(postData));
     }
 
     async handlePublished(post: Posts): Promise<void>{
         const techStackString: string | boolean = this.getTechFromTags(post[GHOST_POST_FIELD.base.TAGS]);
         const tech: TechStack | undefined = TechStack[techStackString as keyof typeof TechStack];
-
         if (!tech) return; //TODO: return a meaninful message
         const publishedPostFormatedData = {
             id: post[GHOST_POST_FIELD.base.ID],
@@ -101,11 +102,11 @@ export class PostsService {
 
     private async clearMalformedCourseStructure( tech: TechStack): Promise<void>{
         const cachedData = await this.redisService.get(tech);
-
         if (!cachedData) return;
         let parsedData = JSON.parse(cachedData);
         if (!(parsedData instanceof Array)) this.redisService.delete(tech);
     }
+
     async getPostDataAndUpdateCache( tech: TechStack,fields: Array<string>, include: Array<string>, filter: ArrayOfStringPairs): Promise<Posts[]> {
         this.clearMalformedCourseStructure(tech);
         const cachedCourseStructure = await this.redisService.get(tech);
