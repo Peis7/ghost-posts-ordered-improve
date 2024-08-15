@@ -59,4 +59,12 @@ export class PostsController {
     const post:Posts = body?.post?.current;
     this.postsService.handleUnpublished(post);
   }
+
+  @Post('/deleted')
+  async deleted(@Req() request: Request): Promise<void>   {
+    const { body } = request as PostWebhookPayload;
+    const post:Posts = body?.post?.previous; 
+    this.postsService.handleDeleted(post);
+  }
 }
+ 
