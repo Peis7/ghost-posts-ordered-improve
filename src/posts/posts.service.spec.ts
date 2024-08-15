@@ -220,6 +220,20 @@ describe('Posts Service', () => {
       expect(spyGet).toHaveBeenCalledTimes(2);
       expect(JSON.parse(cachedValueAfterUnpublished)).toStrictEqual(expectedCourseStructure);
     });
+
+    it(`should remove post from cache when post is deleted and update cached value for: ${tech}`, async () => {
+      await redisService.set(tech, JSON.stringify(mockPostsProcessedResult));//set a value in cache
+      const spyGet = jest.spyOn(redisService, 'get');
+      const spySetCahce = jest.spyOn(service as any, 'setCache');
+      const testPost = mockPosts[mockPosts.length - 1]; //get a copy of last test post to upublish
+      testPost['tags'].unshift({name: tech});//add  the main tag [ index 0 ]
+      await service.handleDeleted(testPost);
+      const cachedValueAfterUnpublished = await redisService.get(tech);
+      const expectedCourseStructure = mockPostsProcessedResult.filter((post)=>post[GHOST_POST_FIELD.base.ID] != testPost[GHOST_POST_FIELD.base.ID]);
+      expect(spySetCahce).toHaveBeenCalledTimes(1);
+      expect(spyGet).toHaveBeenCalledTimes(2);
+      expect(JSON.parse(cachedValueAfterUnpublished)).toStrictEqual(expectedCourseStructure);
+    });
   });
 });
 
