@@ -22,7 +22,6 @@ export class PostsController {
 
   @Post('/updatecache')
   async updateCache(@Req() request: Request): Promise<void>   {
-    console.log(request['body'])
     const { body } = request as PostWebhookPayload; 
     
     const parsedBody: PostWebhookPayload = {

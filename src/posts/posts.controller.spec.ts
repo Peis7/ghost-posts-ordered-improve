@@ -69,11 +69,7 @@ describe('PostsController', () => {
   });
 
   it('should return an array of posts', async () => {
-    const request = {
-      body: { tech: TechStack.Python.toString() },
-    } as unknown as Request;
-    
-    const result = await controller.getCourseStructure(request);
+    const result = await controller.getCourseStructure(TechStack.Python.toString() );
     const filter: ArrayOfStringPairs = BASE_FILTER;
     filter.push(['primary_tag',`[${TechStack.Python.toString()}]`]);
 
@@ -85,13 +81,8 @@ describe('PostsController', () => {
   });
 
   it('should return an empty array when invalid tech is provided', async () => {
-    // Create a mock request object with invalid tech
-    const request = {
-        body: { tech: 'InvalidTech' },
-    } as unknown as Request;
-
     // Call the controller method
-    const result = await controller.getCourseStructure(request);
+    const result = await controller.getCourseStructure('InvalidTech');
 
     // Assert the result
     expect(result).toEqual([]);
