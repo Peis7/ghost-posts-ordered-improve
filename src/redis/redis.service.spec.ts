@@ -3,15 +3,19 @@ import { createMock } from '@golevelup/ts-jest';
 import Redis from 'ioredis';
 import { RedisService } from './redis.service';
 import { CACHE_OPTIONS } from '../cache/constants';
+import { ConfigService } from '@nestjs/config';
 
 describe('RedisService', () => {
   let redisClient: Redis;
   let redisService: RedisService;
+  let configService: ConfigService;
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [],
       controllers: [],
       providers: [
+        ConfigService,
         RedisService,
         {
           provide: CACHE_OPTIONS,
@@ -22,6 +26,7 @@ describe('RedisService', () => {
 
     redisClient = module.get(CACHE_OPTIONS);
     redisService = module.get<RedisService>(RedisService);
+    configService = module.get<ConfigService>(ConfigService);
     jest.resetAllMocks();
   });
 
