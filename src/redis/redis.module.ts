@@ -25,7 +25,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
               password: configService.get('REDIS_PASSWORD'),
             },
         onClientReady: (client: Redis) => {
-          console.log('redis ready');
+          console.log('Redis is ready');
         },
       }),
       inject: [ConfigService],

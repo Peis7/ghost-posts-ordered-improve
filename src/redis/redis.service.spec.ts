@@ -3,15 +3,20 @@ import { createMock } from '@golevelup/ts-jest';
 import Redis from 'ioredis';
 import { RedisService } from './redis.service';
 import { CACHE_OPTIONS } from '../cache/constants';
+import { ConfigService } from '@nestjs/config';
 
 describe('RedisService', () => {
   let redisClient: Redis;
   let redisService: RedisService;
+  let configService: ConfigService;
+  let ret:number;
+  let retu:string;
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [],
       controllers: [],
       providers: [
+        ConfigService,
         RedisService,
         {
           provide: CACHE_OPTIONS,
@@ -22,6 +27,9 @@ describe('RedisService', () => {
 
     redisClient = module.get(CACHE_OPTIONS);
     redisService = module.get<RedisService>(RedisService);
+    configService = module.get<ConfigService>(ConfigService);
+    ret = configService.get<number>('REDIS_EXPIRATION_TIME');
+    retu = configService.get<string>('REDIS_EXPIRATION_TIME_UNIT') 
     jest.resetAllMocks();
   });
 

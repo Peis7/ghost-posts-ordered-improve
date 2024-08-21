@@ -54,7 +54,7 @@ export class PostsService {
             return post; 
         });
 
-        await this.redisService.set(tech, JSON.stringify(postData));
+        await this.setCache(tech, JSON.stringify(postData));
     }
 
     async handleDeleted(post: Posts): Promise<void>{
@@ -144,7 +144,6 @@ export class PostsService {
         
         if (Array.isArray(data['posts'])){
             postData = data['posts'].map((post)=>{
-                console.log(post);
                 return {
                     id: post[GHOST_POST_FIELD.base.ID],
                     index: this.getIndexFrom(post[GHOST_POST_FIELD.base.TAGS], INDEX_TAG_FORMAT),
