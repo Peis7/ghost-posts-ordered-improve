@@ -1,11 +1,10 @@
-import { Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { Posts } from '../interfaces/posts';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { PostWebhookPayload } from '../interfaces/postwebhookpayload';
 import { FIELDS, BASE_FILTER, INCLUDE } from './constants/ghost';
 import { isTechStack } from './enums/techStack';
-import { getCourseStructureBody } from './interfaces/getCourseStructureRequest';
 import { ArrayOfStringPairs } from './types/custom';
 
 @UseGuards(ThrottlerGuard)
@@ -14,9 +13,7 @@ export class PostsController {
   constructor(private postsService: PostsService) {}
 
   @Get('/')
-  async getCourseStructure(@Req() request: Request): Promise<Posts[]>   {
-    const { body } = request;
-    const { tech } = body as getCourseStructureBody;
+  async getCourseStructure(@Query('tech') tech: string): Promise<Posts[]>   {
     const filter: ArrayOfStringPairs = BASE_FILTER;
     filter.push(['primary_tag',`[${tech.toLowerCase()}]`]);
     if (!isTechStack(tech)) return [];
@@ -25,7 +22,8 @@ export class PostsController {
 
   @Post('/updatecache')
   async updateCache(@Req() request: Request): Promise<void>   {
-    const { body } = request as PostWebhookPayload;
+    console.log(request['body'])
+    const { body } = request as PostWebhookPayload; 
     
     const parsedBody: PostWebhookPayload = {
      body:{ 
@@ -34,6 +32,7 @@ export class PostsController {
                 id: body?.post?.current?.id || '',
                 tags: body?.post?.current?.tags || [],
                 slug: body?.post?.current?.slug || '',
+                title: body?.post?.current?.title || '',
             },
             previous: {
                 id: body?.post?.current?.id || '', //id is alway in present data
