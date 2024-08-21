@@ -22,12 +22,13 @@ export class PostsService {
 
     async updateCache(data: PostWebhookPayload): Promise<void> {
         const updatedPostId = data?.body?.post?.current?.id;
+        const updatedTitle = data?.body?.post?.current?.title;
         const slug =  data?.body?.post?.current?.slug;
         const tags = data?.body?.post?.current?.tags;
 
         const techStackString: string | boolean = this.getTechFromTags(data?.body?.post?.current?.tags);
 
-   
+        console.log(techStackString);
         const tech: TechStack | undefined = TechStack[techStackString as keyof typeof TechStack];
 
         if (!tech) return; //TODO: return a meaninful message
@@ -39,11 +40,15 @@ export class PostsService {
         //so far, we know that there is data
 
         let postData = JSON.parse(cached);
+        console.log('UPDATING...................');
+        //console.log(postData);
+        console.log(data?.body?.post?.current);
         if (!(postData instanceof Array)) return;
         postData = postData.map((post)=>{
             if (post[GHOST_POST_FIELD.base.ID] === updatedPostId){
                     let updatedPost = {
                         ...post,
+                        title: updatedTitle ? updatedTitle : post[GHOST_POST_FIELD.base.TITLE],
                         index: tags ? this.getIndexFrom(tags, INDEX_TAG_FORMAT) : post[GHOST_POST_FIELD.calculated.INDEX],
                         level: tags ? this.getFirstTagWithPatther(tags, LEVEL_TAG_FORMAT) : post[GHOST_POST_FIELD.calculated.LEVEL],
                         no_menu: tags ? (this.getFirstTagWithPatther(tags, NO_MENU_TAG) ? true : false) : post[GHOST_POST_FIELD.calculated.NO_MENU],
@@ -105,7 +110,8 @@ export class PostsService {
     private getTechFromTags(tags: Array<Tag>): string | boolean {
         if (tags.length == 0 ) return false;
         let mainTag = tags[0];
-        return (mainTag.name && isTechStack(mainTag.name)) ? mainTag.name : false;
+        console.log(mainTag);
+        return (mainTag.name && isTechStack(this.capitalizeFirstLetter(mainTag.name))) ? this.capitalizeFirstLetter(mainTag.name) : false;
     }
 
     private async clearMalformedCourseStructure( tech: TechStack): Promise<void>{
@@ -186,7 +192,10 @@ export class PostsService {
         .filter(num => num !== null).sort((a, b) => a - b);
         return indexArray.length > 0 ? indexArray[0] : -1;
     }
-    
+    private capitalizeFirstLetter(str) {
+        if (str.length === 0) return str; // Handle empty string
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
     private buildUrl(fields: Array<string>, include: Array<string>, filter: ArrayOfStringPairs): string {
         const baseUrl = `${this.getConfig('ghost.api_url')}:${this.getConfig('ghost.port')}`;
         const contentPath = this.getConfig('ghost.content_path');
