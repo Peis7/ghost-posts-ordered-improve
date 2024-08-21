@@ -11,7 +11,6 @@ import { isTechStack, TechStack } from './enums/techStack';
 import { Tag } from '../interfaces/tags';
 import { ArrayOfStringPairs } from './types/custom';
 
-
 @Injectable()
 export class PostsService {
     constructor(
@@ -28,7 +27,6 @@ export class PostsService {
 
         const techStackString: string | boolean = this.getTechFromTags(data?.body?.post?.current?.tags);
 
-        console.log(techStackString);
         const tech: TechStack | undefined = TechStack[techStackString as keyof typeof TechStack];
 
         if (!tech) return; //TODO: return a meaninful message
@@ -40,9 +38,6 @@ export class PostsService {
         //so far, we know that there is data
 
         let postData = JSON.parse(cached);
-        console.log('UPDATING...................');
-        //console.log(postData);
-        console.log(data?.body?.post?.current);
         if (!(postData instanceof Array)) return;
         postData = postData.map((post)=>{
             if (post[GHOST_POST_FIELD.base.ID] === updatedPostId){
@@ -107,10 +102,10 @@ export class PostsService {
         cachedPosts.push(publishedPostFormatedData);
         this.setCache(tech, JSON.stringify(cachedPosts));
     }
+
     private getTechFromTags(tags: Array<Tag>): string | boolean {
         if (tags.length == 0 ) return false;
         let mainTag = tags[0];
-        console.log(mainTag);
         return (mainTag.name && isTechStack(this.capitalizeFirstLetter(mainTag.name))) ? this.capitalizeFirstLetter(mainTag.name) : false;
     }
 
@@ -149,6 +144,7 @@ export class PostsService {
         
         if (Array.isArray(data['posts'])){
             postData = data['posts'].map((post)=>{
+                console.log(post);
                 return {
                     id: post[GHOST_POST_FIELD.base.ID],
                     index: this.getIndexFrom(post[GHOST_POST_FIELD.base.TAGS], INDEX_TAG_FORMAT),
