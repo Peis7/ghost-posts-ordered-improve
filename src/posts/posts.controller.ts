@@ -14,10 +14,10 @@ export class PostsController {
 
   @Get('/')
   async getCourseStructure(@Query('tech') tech: string): Promise<Posts[]>   {
-    const filter: ArrayOfStringPairs = BASE_FILTER;
-    filter.push(['primary_tag',`[${tech.toLowerCase()}]`]);
+    const filter: ArrayOfStringPairs = [...BASE_FILTER];
+    filter.push(['primary_tag',`${tech.toLowerCase()}`]);
     if (!isTechStack(tech)) return [];
-    return this.postsService.getPostDataAndUpdateCache(tech, FIELDS, INCLUDE, filter);
+    return this.postsService.getPostDataAndUpdateCache(tech, [...FIELDS], [...INCLUDE], filter);
   }
 
   @Post('/updatecache')

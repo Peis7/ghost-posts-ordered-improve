@@ -119,6 +119,7 @@ export class PostsService {
     async getPostDataAndUpdateCache( tech: TechStack,fields: Array<string>, include: Array<string>, filter: ArrayOfStringPairs): Promise<Posts[]> {
         this.clearMalformedCourseStructure(tech);
         const cachedCourseStructure = await this.redisService.get(tech);
+
         if (cachedCourseStructure){
             return JSON.parse(cachedCourseStructure) as Posts[];
         }
