@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
-import { PostsController } from './posts.controller';
-import { PostsService } from './posts.service';
 import { HttpModule } from '@nestjs/axios';
+import { RedisService } from '../redis/redis.service';
 import { RedisModule } from '../redis/redis.module';
 import { CacheModule } from '../cache/cache.module';
+import { SearchController } from './search.controller';
+import { SearchService } from './search.service';
 
 @Module({
   imports: [
@@ -11,7 +12,7 @@ import { CacheModule } from '../cache/cache.module';
     CacheModule,
     RedisModule
   ],
-  controllers: [PostsController],
-  providers: [PostsService]
+  controllers: [SearchController],
+  providers: [SearchService]
 })
-export class PostsModule {}
+export class SearchModule {}
