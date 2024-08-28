@@ -69,15 +69,15 @@ describe('PostsController', () => {
   });
 
   it('should return an array of posts', async () => {
-    const result = await controller.getCourseStructure(TechStack.Python.toString() );
-    const filter: ArrayOfStringPairs = BASE_FILTER;
-    filter.push(['primary_tag',`[${TechStack.Python.toString()}]`]);
+    const result = await controller.getCourseStructure(TechStack.Python.toString());
+    const filter: ArrayOfStringPairs = [...BASE_FILTER];
+    filter.push(['primary_tag',`${TechStack.Python.toLowerCase()}`]);
 
     expect(result).toEqual([
       {  id: '1', title: 'Post 1', url: 'url1', featured: true, slug:'p1', published_at: new Date('1990-02-20T20:11:10.230Z'), tags: [{ name: 'tag1' }] },
       {  id: '2', title: 'Post 2', url: 'url2', featured: false, slug:'p2', published_at: new Date('1960-06-29T20:11:10.230Z'), tags: [{ name: 'tag2' }] },
     ]);
-    expect(postsService.getPostDataAndUpdateCache).toHaveBeenCalledWith(TechStack.Python,FIELDS, INCLUDE, filter);
+    expect(postsService.getPostDataAndUpdateCache).toHaveBeenCalledWith(TechStack.Python,[...FIELDS], [...INCLUDE], filter);
   });
 
   it('should return an empty array when invalid tech is provided', async () => {

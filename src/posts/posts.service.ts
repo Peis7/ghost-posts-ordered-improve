@@ -198,6 +198,7 @@ export class PostsService {
         const apiKey = this.getConfig('ghost.content_api_key');
     
         const url = new URL(contentPath, baseUrl);
+
         url.searchParams.append('key', apiKey);
 
         if (include.length > 0 ){

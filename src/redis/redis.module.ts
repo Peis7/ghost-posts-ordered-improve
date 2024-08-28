@@ -15,12 +15,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
           ? {
               connectionName: configService.get('REDIS_CONNECTION_NAME'),
               host: configService.get('REDIS_HOST'),
-              port: Number(configService.get('REDIS_PORT')),
+              port: Number(configService.get('REDIS_PORT')) || 6379,
             }
           : {
               connectionName: configService.get('REDIS_CONNECTION_NAME'),
               host: configService.get('REDIS_HOST'),
-              port: Number(configService.get('REDIS_PORT')),
+              port: Number(configService.get('REDIS_PORT'))  || 6379,
               username: configService.get('REDIS_USER_NAME'),
               password: configService.get('REDIS_PASSWORD'),
             },
