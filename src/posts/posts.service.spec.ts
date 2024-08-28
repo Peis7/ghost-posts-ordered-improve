@@ -168,7 +168,7 @@ describe('Posts Service', () => {
       expect(spySetCahce).toHaveBeenCalledTimes(1);
       expect(spySetCahce).toHaveBeenCalledWith(tech, JSON.stringify(mockPostsProcessedResult));
 
-      expect(setTechCacheSpy).toHaveBeenCalledTimes(1);
+      expect(setTechCacheSpy).toHaveBeenCalledTimes(2);
       expect(setTechCacheSpy).toHaveBeenCalledWith(tech, JSON.stringify(mockPostsProcessedResult));
       const cachedValue = await redisService.get(tech);
       expect(cachedValue).toBeTruthy();
@@ -186,7 +186,7 @@ describe('Posts Service', () => {
 
       expect(spySetCahce).toHaveBeenCalledTimes(0);
       expect(spySet).toHaveBeenCalledTimes(1);
-      expect(spyGet).toHaveBeenCalledTimes(2);
+      expect(spyGet).toHaveBeenCalledTimes(3);
       const cachedValue = await redisService.get(tech);
       expect(cachedValue).toBeTruthy();
       expect(cachedValue).toBe(JSON.stringify(mockPostsProcessedResult));
@@ -217,7 +217,7 @@ describe('Posts Service', () => {
       const cachedValueAfterUnpublished = await redisService.get(tech);
       const expectedCourseStructure = mockPostsProcessedResult.filter((post)=>post[GHOST_POST_FIELD.base.ID] != testPost[GHOST_POST_FIELD.base.ID]);
       expect(spySetCahce).toHaveBeenCalledTimes(1);
-      expect(spyGet).toHaveBeenCalledTimes(2);
+      expect(spyGet).toHaveBeenCalledTimes(3);
       expect(JSON.parse(cachedValueAfterUnpublished)).toStrictEqual(expectedCourseStructure);
     });
 
@@ -231,7 +231,7 @@ describe('Posts Service', () => {
       const cachedValueAfterUnpublished = await redisService.get(tech);
       const expectedCourseStructure = mockPostsProcessedResult.filter((post)=>post[GHOST_POST_FIELD.base.ID] != testPost[GHOST_POST_FIELD.base.ID]);
       expect(spySetCahce).toHaveBeenCalledTimes(1);
-      expect(spyGet).toHaveBeenCalledTimes(2);
+      expect(spyGet).toHaveBeenCalledTimes(3);
       expect(JSON.parse(cachedValueAfterUnpublished)).toStrictEqual(expectedCourseStructure);
     });
   });
