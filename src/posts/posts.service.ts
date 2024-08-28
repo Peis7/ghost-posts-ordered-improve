@@ -6,7 +6,7 @@ import { Posts } from '../interfaces/posts';
 import { RedisService } from '../redis/redis.service';
 import { PostWebhookPayload } from '../interfaces/postwebhookpayload';
 import { GHOST_POST_FIELD }  from './interfaces/postfields'
-import { INDEX_TAG_FORMAT, LEVEL_TAG_FORMAT, NO_MENU_TAG } from './constants/ghost';
+import { INDEX_TAG_FORMAT, LEVEL_TAG_FORMAT, NO_MENU_TAG, CACHED_TECH_KEY } from './constants/ghost';
 import { isTechStack, TechStack } from './enums/techStack';
 import { Tag } from '../interfaces/tags';
 import { ArrayOfStringPairs } from './types/custom';
@@ -24,10 +24,10 @@ export class PostsService {
         const updatedTitle = data?.body?.post?.current?.title;
         const slug =  data?.body?.post?.current?.slug;
         const tags = data?.body?.post?.current?.tags;
-
         const techStackString: string | boolean = this.getTechFromTags(data?.body?.post?.current?.tags);
 
         const tech: TechStack | undefined = TechStack[techStackString as keyof typeof TechStack];
+
 
         if (!tech) return; //TODO: return a meaninful message
         
@@ -54,7 +54,7 @@ export class PostsService {
             return post; 
         });
 
-        await this.setCache(tech, JSON.stringify(postData));
+        await this.setTechCache(tech, JSON.stringify(postData));
     }
 
     async handleDeleted(post: Posts): Promise<void>{
@@ -75,7 +75,7 @@ export class PostsService {
         if (!(postData instanceof Array)) return;
         
         postData = postData.filter((cachedpost)=> cachedpost[GHOST_POST_FIELD.base.ID] !== post[GHOST_POST_FIELD.base.ID] );
-        await this.setCache(tech, JSON.stringify(postData));
+        await this.setTechCache(tech, JSON.stringify(postData));
         return;
     }
 
@@ -100,7 +100,7 @@ export class PostsService {
             cachedPosts = JSON.parse(cachedCourseStructure) as Posts[];
         }
         cachedPosts.push(publishedPostFormatedData);
-        this.setCache(tech, JSON.stringify(cachedPosts));
+        this.setTechCache(tech, JSON.stringify(cachedPosts));
     }
 
     private getTechFromTags(tags: Array<Tag>): string | boolean {
@@ -120,11 +120,12 @@ export class PostsService {
         this.clearMalformedCourseStructure(tech);
         const cachedCourseStructure = await this.redisService.get(tech);
 
+        this.addTechStack(CACHED_TECH_KEY, tech);//TODO: cover test
         if (cachedCourseStructure){
             return JSON.parse(cachedCourseStructure) as Posts[];
         }
         const postData = await this.get(fields, include, filter);
-        this.setCache(tech, JSON.stringify(postData))
+        this.setTechCache(tech, JSON.stringify(postData))
         return postData;
     }
     private async get(fields: Array<string>, include: Array<string>, filter: ArrayOfStringPairs): Promise<Posts[]> {
@@ -161,9 +162,33 @@ export class PostsService {
         return postData;
     }
 
-    private setCache(key, value){
+    private async setTechCache(key, value){
         this.redisService.set(key, value);
+        this.addTechStack(CACHED_TECH_KEY, key);
     }
+
+    async storeTechStacks(key: string, techStacks: string[]): Promise<void> {
+        const value = JSON.stringify({ storedTechStacks: techStacks, lastUpdate: new Date() });
+        await this.redisService.set(key, value);
+      }
+    
+      async getTechStacks(key: string): Promise<string[]> {
+        const result = await this.redisService.get(key);
+        if (result) {
+          const parsed = JSON.parse(result);
+          return parsed.storedTechStacks || [];
+        }
+        return [];
+      }
+    
+      async addTechStack(key: string, newTechStack: string): Promise<void> {
+        const currentTechStacks = await this.getTechStacks(key);
+        if (!currentTechStacks.includes(newTechStack)) {
+            currentTechStacks.push(newTechStack);
+            await this.storeTechStacks(key, currentTechStacks);
+        } 
+      }
+
     private isNew(published_at){
         const publicationDate = new Date(published_at);
         const currentDate = new Date();
