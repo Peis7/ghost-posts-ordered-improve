@@ -29,12 +29,12 @@ const ENV = process.env.NODE_ENV;
             ? {
                 connectionName: configService.get<string>('REDIS_CONNECTION_NAME'),
                 host: configService.get<string>('REDIS_HOST'),
-                port: Number(configService.get<string>('REDIS_PORT')),
+                port: Number(configService.get<string>('REDIS_PORT'))  | 6379,
               }
             : {
                 connectionName: configService.get<string>('REDIS_CONNECTION_NAME'),
                 host: configService.get<string>('REDIS_HOST'),
-                port: Number(configService.get<number>('REDIS_PORT')),
+                port: Number(configService.get<number>('REDIS_PORT')) | 6379,
                 username: configService.get<string>('REDIS_USER_NAME'),
                 password: configService.get<string>('REDIS_PASSWORD'),
               },
