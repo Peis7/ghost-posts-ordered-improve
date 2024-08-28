@@ -10,8 +10,7 @@ export class SearchController {
 
   @Get('/')
   async getCourseStructure(@Query('term') term: string): Promise<SearchResult[]>   {
-    console.log(term);
-    return this.searchService.search(term);
+    return this.searchService.search(term); 
   }
 
 }
