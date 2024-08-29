@@ -5,6 +5,7 @@ import { RedisModule } from '../redis/redis.module';
 import { CacheModule } from '../cache/cache.module';
 import { SearchController } from './search.controller';
 import { SearchService } from './search.service';
+import { PostsService } from '../posts/posts.service';
 
 @Module({
   imports: [
@@ -13,6 +14,6 @@ import { SearchService } from './search.service';
     RedisModule
   ],
   controllers: [SearchController],
-  providers: [SearchService]
+  providers: [SearchService, PostsService]
 })
 export class SearchModule {}

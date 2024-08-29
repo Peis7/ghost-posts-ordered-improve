@@ -6,10 +6,11 @@ import { Posts } from '../interfaces/posts';
 import { RedisService } from '../redis/redis.service';
 import { PostWebhookPayload } from '../interfaces/postwebhookpayload';
 import { GHOST_POST_FIELD }  from './interfaces/postfields'
-import { INDEX_TAG_FORMAT, LEVEL_TAG_FORMAT, NO_MENU_TAG, CACHED_TECH_KEY } from './constants/ghost';
+import { INDEX_TAG_FORMAT, LEVEL_TAG_FORMAT, NO_MENU_TAG } from './constants/ghost';
+import { CACHED_TECH_KEY } from '../constants';
 import { isTechStack, TechStack } from './enums/techStack';
 import { Tag } from '../interfaces/tags';
-import { ArrayOfStringPairs } from './types/custom';
+import { ArrayOfStringPairs } from '../types/custom';
 
 @Injectable()
 export class PostsService {
@@ -125,10 +126,11 @@ export class PostsService {
             return JSON.parse(cachedCourseStructure) as Posts[];
         }
         const postData = await this.get(fields, include, filter);
-        this.setTechCache(tech, JSON.stringify(postData))
+        this.setTechCache(tech, JSON.stringify(postData));
         return postData;
     }
-    private async get(fields: Array<string>, include: Array<string>, filter: ArrayOfStringPairs): Promise<Posts[]> {
+    
+    async get(fields: Array<string>, include: Array<string>, filter: ArrayOfStringPairs): Promise<Posts[]> {
         const url = this.buildUrl(fields, include, filter)
 
         //TODO: add this to .env?
