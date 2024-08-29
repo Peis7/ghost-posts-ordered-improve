@@ -5,7 +5,7 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 import { PostWebhookPayload } from '../interfaces/postwebhookpayload';
 import { FIELDS, BASE_FILTER, INCLUDE } from './constants/ghost';
 import { isTechStack } from './enums/techStack';
-import { ArrayOfStringPairs } from './types/custom';
+import { ArrayOfStringPairs } from '../types/custom';
 
 @UseGuards(ThrottlerGuard)
 @Controller('v1/posts')
