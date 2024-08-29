@@ -25,6 +25,8 @@ export class PostsService {
         const updatedTitle = data?.body?.post?.current?.title;
         const slug =  data?.body?.post?.current?.slug;
         const tags = data?.body?.post?.current?.tags;
+        const excerpt = data?.body?.post?.current?.excerpt;
+        const mainTag = data?.body?.post?.current?.mainTag;
         const techStackString: string | boolean = this.getTechFromTags(data?.body?.post?.current?.tags);
 
         const tech: TechStack | undefined = TechStack[techStackString as keyof typeof TechStack];
@@ -48,7 +50,9 @@ export class PostsService {
                         index: tags ? this.getIndexFrom(tags, INDEX_TAG_FORMAT) : post[GHOST_POST_FIELD.calculated.INDEX],
                         level: tags ? this.getFirstTagWithPatther(tags, LEVEL_TAG_FORMAT) : post[GHOST_POST_FIELD.calculated.LEVEL],
                         no_menu: tags ? (this.getFirstTagWithPatther(tags, NO_MENU_TAG) ? true : false) : post[GHOST_POST_FIELD.calculated.NO_MENU],
-                        slug: slug || post[GHOST_POST_FIELD.base.SLUG]
+                        slug: slug || post[GHOST_POST_FIELD.base.SLUG],
+                        excerpt: excerpt || post[GHOST_POST_FIELD.base.EXCERPT],
+                        mainTag: mainTag || this.getMainTag(post[GHOST_POST_FIELD.base.TAGS]),
                     }
                     return updatedPost;
             }
@@ -93,7 +97,8 @@ export class PostsService {
             url: post[GHOST_POST_FIELD.base.URL],
             slug: post[GHOST_POST_FIELD.base.SLUG],
             featured: post[GHOST_POST_FIELD.base.FEATURED],
-            new: this.isNew(post[GHOST_POST_FIELD.base.PUBLISHED_AT])
+            new: this.isNew(post[GHOST_POST_FIELD.base.PUBLISHED_AT]),
+            mainTag: this.getMainTag(post[GHOST_POST_FIELD.base.TAGS]),
         }
         const cachedCourseStructure = await this.redisService.get(tech);
         let cachedPosts:Posts[] = []
@@ -120,7 +125,6 @@ export class PostsService {
     async getPostDataAndUpdateCache( tech: TechStack,fields: Array<string>, include: Array<string>, filter: ArrayOfStringPairs): Promise<Posts[]> {
         this.clearMalformedCourseStructure(tech);
         const cachedCourseStructure = await this.redisService.get(tech);
-
         this.addTechStack(CACHED_TECH_KEY, tech);//TODO: cover test
         if (cachedCourseStructure){
             return JSON.parse(cachedCourseStructure) as Posts[];
@@ -157,7 +161,10 @@ export class PostsService {
                     url: post[GHOST_POST_FIELD.base.URL],
                     slug: post[GHOST_POST_FIELD.base.SLUG],
                     featured: post[GHOST_POST_FIELD.base.FEATURED],
-                    new: this.isNew(post[GHOST_POST_FIELD.base.PUBLISHED_AT])
+                    new: this.isNew(post[GHOST_POST_FIELD.base.PUBLISHED_AT]),
+                    published_at: post[GHOST_POST_FIELD.base.PUBLISHED_AT],
+                    excerpt: post[GHOST_POST_FIELD.base.EXCERPT],
+                    mainTag: this.getMainTag(post[GHOST_POST_FIELD.base.TAGS]),
                 }
             })
         }
@@ -198,6 +205,11 @@ export class PostsService {
         const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
         return diffInDays < parseInt(this.configService.get<string>('ghost.new_publication_treshhold'));
     }
+
+    private getMainTag(tags: Array<any>): string | undefined{
+        return tags.length > 0 ? tags[0]['slug'] : undefined
+    }
+
     private getFirstTagWithPatther(tags: Array<any>, pattern: String): string {
         const tag = tags.find(tag => {
             const str = tag.slug || tag.name; 
@@ -238,7 +250,7 @@ export class PostsService {
             let filterOptions = filter.map(filter=>{
                 return filter.join(':');
             })
-            url.searchParams.append('filter', filterOptions.join(','));
+            url.searchParams.append('filter', filterOptions.join('+'));
         }
         return url.toString();
     }

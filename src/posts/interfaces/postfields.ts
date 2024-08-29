@@ -5,8 +5,9 @@ export const GHOST_POST_FIELD =  {
         TAGS: 'tags',
         SLUG: 'slug',
         PUBLISHED_AT: 'published_at',
+        EXCERPT: 'excerpt',
         FEATURED: 'featured',
-        URL: 'url'
+        URL: 'url',
     },
     calculated: {
         INDEX:'index',

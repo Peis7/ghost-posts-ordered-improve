@@ -5,7 +5,9 @@ export interface PostWebhookPayload{
                 id?: string,
                 title?: string,
                 tags?: Array<any>,
-                slug?: string
+                slug?: string,
+                excerpt?: string,
+                mainTag?: string
             },
             previous?: {
                 id?: string,

@@ -32,6 +32,8 @@ export class PostsController {
                 tags: body?.post?.current?.tags || [],
                 slug: body?.post?.current?.slug || '',
                 title: body?.post?.current?.title || '',
+                excerpt: body?.post?.current?.excerpt || '',
+                mainTag: body?.post?.current?.mainTag || '',
             },
             previous: {
                 id: body?.post?.current?.id || '', //id is alway in present data
