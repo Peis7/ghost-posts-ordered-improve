@@ -230,7 +230,7 @@ describe('Posts Service', () => {
       const cachedValueAfterUnpublished = await redisService.get(tech);
       const expectedCourseStructure =  mockPostsProcessedResult.
                                         filter((post)=>post[GHOST_POST_FIELD.base.ID] != testPost[GHOST_POST_FIELD.base.ID])
-                                           .map((obj)=> { return { ...obj,published_at: obj.published_at.toISOString() } });;
+                                           .map((obj)=> { return { ...obj,published_at: obj.published_at.toISOString() } });
       expect(spySetCahce).toHaveBeenCalledTimes(1);
       expect(spyGet).toHaveBeenCalledTimes(3);
       expect(JSON.parse(cachedValueAfterUnpublished)).toStrictEqual(expectedCourseStructure);

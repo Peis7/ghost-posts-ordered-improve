@@ -39,6 +39,7 @@ export class SearchService {
         formatedPosts = this.castPostsToResult(matchingPosts);
         return formatedPosts;
     }
+    
     private castPostsToResult(posts: any[]) : SearchResult[]  {
         return posts.map((post) => {
             return {
@@ -63,7 +64,7 @@ export class SearchService {
 
     private performSearch(term: string, posts: any[]){
         let matchingPosts = [];
-        const words = term.split(/\s+/);
+        const words = term.trim() === "" ? [] : term.split(/\s+/);
         posts.forEach((post)=>{
             //if (post['no_menu']) return;// exclude post that are not part of the menu
             if (!post['no_menu']){
@@ -78,11 +79,11 @@ export class SearchService {
                     }
                 });
                 if (count > 0){
-                    matchingPosts.push({...post, weight: count })
+                    matchingPosts.push({...post, weight: count });
                 };
                 
             }
-        })
+        });
         return matchingPosts;
     }
 

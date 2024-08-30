@@ -86,9 +86,6 @@ describe('Posts Service', () => {
                                 level: null,
                                 no_menu: false,
                                 url: 'url3',
-                                slug: 'slug3',
-                                featured: false,
-                                new: false,
                                 published_at: new Date('1958-06-29T20:11:10.230Z'), 
                                 excerpt: 'This is a node post',
                                 mainTag: TechStack.NodeJS.toLocaleLowerCase(),
@@ -206,6 +203,46 @@ describe('Posts Service', () => {
     const result = await service.search(term);
     expect(result.length).toEqual(1);
     expect(result[0].weight).toEqual(3);
+  });
+
+  it('should return 0 results for terms not part of any post', async () => {
+    const term = "Weird words";
+    const result = await service.search(term);
+    expect(result.length).toEqual(0);
+  });
+
+
+  it('should return 0 results for empty seacrh term', async () => {
+    const term = "";
+    const result = await service.search(term);
+    expect(result.length).toEqual(0);
+  });
+
+  it(`should return all post related to ${ TechStack.Python}  and ${TechStack.NodeJS} `, async () => {
+    const term = "Python Node";
+    const result = await service.search(term);
+    const postsCount = mockPostsProcessedResult[TechStack.Python].length + mockPostsProcessedResult[TechStack.NodeJS].length
+    expect(result.length).toEqual(postsCount);
+  });
+
+  it(`should rprocess stored posts in cache`, async () => {
+    const term = "Python Node";
+    const handleCachedSearchSpy = jest.spyOn(service as any, 'handleCachedSearch');
+    const castPostsToResultSpy = jest.spyOn(service as any, 'castPostsToResult');
+    await service.search(term);
+    expect(handleCachedSearchSpy).toHaveBeenCalledTimes(1);
+    const posts = [
+      JSON.stringify(mockPostsProcessedResult[TechStack.Python]),
+      JSON.stringify(mockPostsProcessedResult[TechStack.NodeJS]),
+    ];
+
+    expect(handleCachedSearchSpy).toHaveBeenCalledWith(term, posts);
+    expect(handleCachedSearchSpy).toHaveBeenCalledTimes(1);
+    const expectedValue = [...mockPostsProcessedResult[TechStack.Python],...mockPostsProcessedResult[TechStack.NodeJS]]
+                          .map((obj)=> { return  { ...obj,published_at: obj.published_at.toISOString(), weight: 1 }} );
+
+    expect(castPostsToResultSpy).toHaveBeenCalledWith(expectedValue);
+    expect(castPostsToResultSpy).toHaveBeenCalledTimes(1);
   });
 
 });
