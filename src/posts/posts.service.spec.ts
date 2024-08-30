@@ -36,12 +36,15 @@ describe('Posts Service', () => {
 
     //TODO: move mock data outside
     mockPosts = [
-      { id: '1',title: 'Post 1', url: 'url1', slug: 'slug1', featured: true, published_at: new Date('1990-02-20T20:11:10.230Z'), 
-          tags: [{ name: 'index-1' }, { name: 'no_menu' }] },
-      { id: '2', title: 'Post 2', url: 'url2', slug: 'slug2', featured: false, published_at: new Date('1960-06-29T20:11:10.230Z'), 
-          tags: [{ name: 'index-100' }] },
-      { id: '3', title: 'Post 3', url: 'url3', slug: 'slug3', featured: false, published_at: new Date('1958-06-29T20:11:10.230Z'), 
-        tags: [{ name: 'index-50' }] },
+      { id: '1',title: 'Post 1', url: 'url1', slug: 'slug1', featured: true, 
+        published_at: new Date('1990-02-20T20:11:10.230Z'), excerpt: 'post 1',
+          tags: [{ name: TechStack.Python.toLocaleLowerCase(), slug:'python' },{ name: 'index-1' }, { name: 'no_menu' }] },
+      { id: '2', title: 'Post 2', url: 'url2', slug: 'slug2', featured: false,
+         published_at: new Date('1960-06-29T20:11:10.230Z'), excerpt: 'post 2',
+          tags: [{ name: TechStack.TypeScript.toLocaleLowerCase(), slug:'typescript' }, { name: 'index-100' }] },
+      { id: '3', title: 'Post 3', url: 'url3', slug: 'slug3', featured: false,
+         published_at: new Date('1958-06-29T20:11:10.230Z'), excerpt: 'post 3',
+        tags: [{ name: TechStack.NodeJS.toLocaleLowerCase(), slug:'node.js' }, { name: 'index-50' }] },
     ] as Posts[];
 
     mockPostsProcessedResult = [
@@ -54,7 +57,10 @@ describe('Posts Service', () => {
         url: 'url1',
         slug: 'slug1',
         featured: true,
-        new: false
+        new: false,
+        published_at: new Date('1990-02-20T20:11:10.230Z'),
+        excerpt: 'post 1',
+        mainTag: TechStack.Python.toLocaleLowerCase(),
 
     },
     {
@@ -66,7 +72,10 @@ describe('Posts Service', () => {
       url: 'url2',
       slug: 'slug2',
       featured: false,
-      new: false
+      new: false,
+      published_at: new Date('1960-06-29T20:11:10.230Z'),
+      excerpt: 'post 2',
+      mainTag: TechStack.TypeScript.toLocaleLowerCase(),
     },
     {
       id: '3',
@@ -77,7 +86,10 @@ describe('Posts Service', () => {
       url: 'url3',
       slug: 'slug3',
       featured: false,
-      new: false
+      new: false,
+      published_at: new Date('1958-06-29T20:11:10.230Z'), 
+      excerpt: 'post 3',
+      mainTag: TechStack.NodeJS.toLocaleLowerCase(),
     }
 ,
     ];
@@ -190,7 +202,8 @@ describe('Posts Service', () => {
       const cachedValue = await redisService.get(tech);
       expect(cachedValue).toBeTruthy();
       expect(cachedValue).toBe(JSON.stringify(mockPostsProcessedResult));
-      expect(postData).toStrictEqual(mockPostsProcessedResult);
+      const result = mockPostsProcessedResult.map((obj)=> { return { ...obj,published_at: obj.published_at.toISOString() } });
+      expect(postData).toStrictEqual(result);
     });
 
     it(`should add published post to course structure ${tech}`, async () => {
@@ -215,7 +228,9 @@ describe('Posts Service', () => {
       testPost['tags'].unshift({name: tech});//add  the main tag [ index 0 ]
       await service.handleUnpublished(testPost);
       const cachedValueAfterUnpublished = await redisService.get(tech);
-      const expectedCourseStructure = mockPostsProcessedResult.filter((post)=>post[GHOST_POST_FIELD.base.ID] != testPost[GHOST_POST_FIELD.base.ID]);
+      const expectedCourseStructure =  mockPostsProcessedResult.
+                                        filter((post)=>post[GHOST_POST_FIELD.base.ID] != testPost[GHOST_POST_FIELD.base.ID])
+                                           .map((obj)=> { return { ...obj,published_at: obj.published_at.toISOString() } });;
       expect(spySetCahce).toHaveBeenCalledTimes(1);
       expect(spyGet).toHaveBeenCalledTimes(3);
       expect(JSON.parse(cachedValueAfterUnpublished)).toStrictEqual(expectedCourseStructure);
@@ -229,7 +244,9 @@ describe('Posts Service', () => {
       testPost['tags'].unshift({name: tech});//add  the main tag [ index 0 ]
       await service.handleDeleted(testPost);
       const cachedValueAfterUnpublished = await redisService.get(tech);
-      const expectedCourseStructure = mockPostsProcessedResult.filter((post)=>post[GHOST_POST_FIELD.base.ID] != testPost[GHOST_POST_FIELD.base.ID]);
+      const expectedCourseStructure = mockPostsProcessedResult.
+                            filter((post)=>post[GHOST_POST_FIELD.base.ID] != testPost[GHOST_POST_FIELD.base.ID])
+                              .map((obj)=> { return { ...obj,published_at: obj.published_at.toISOString() } });
       expect(spySetCahce).toHaveBeenCalledTimes(1);
       expect(spyGet).toHaveBeenCalledTimes(3);
       expect(JSON.parse(cachedValueAfterUnpublished)).toStrictEqual(expectedCourseStructure);

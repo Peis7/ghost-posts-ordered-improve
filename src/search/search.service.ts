@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { RedisService } from '../redis/redis.service';
 import { GhostContentType, SearchResult } from './interfaces/searchResult';
 import { BASE_FILTER, FIELDS, INCLUDE } from './constants/ghost';
-import { CACHED_TECH_KEY } from '../constants';
+import { SEARCH_CACHE_OBJECT_KEYS } from '../constants';
 import { Posts } from '../interfaces/posts';
 import { PostsService } from '../posts/posts.service';
 import { ArrayOfStringPairs } from 'src/types/custom';
@@ -12,14 +12,12 @@ import { ArrayOfStringPairs } from 'src/types/custom';
 @Injectable()
 export class SearchService {
     constructor(
-        private configService: ConfigService,
-        private readonly httpService: HttpService,
         private redisService: RedisService,
         private postsService: PostsService,
     ) {}
  
     async search(term: string): Promise<SearchResult[]> {
-        const cachedTech = await this.redisService.get(CACHED_TECH_KEY);
+        const cachedTech = await this.redisService.get(SEARCH_CACHE_OBJECT_KEYS.DATA);
         const cachedStacksObject = JSON.parse(cachedTech);
 
         if (!cachedStacksObject) { // if we have no cached post per stack, we query ghost instance directly
@@ -28,10 +26,11 @@ export class SearchService {
             return [...this.castPostsToResult(postList)];
         }
 
-        const techStack = cachedStacksObject['storedTechStacks'];
+        const techStack = cachedStacksObject[SEARCH_CACHE_OBJECT_KEYS.TECH_ARRAY];
         const POSTS = techStack.map(async (tech)=>{
             return await this.redisService.get(tech)
-        })
+        });
+
         const resolvedPOSTS = await Promise.all(POSTS);
         const matchingPosts = this.handleCachedSearch(term, resolvedPOSTS);
 
@@ -56,7 +55,7 @@ export class SearchService {
         posts.forEach((postList)=>{
             if (!postList) return;
             const parsedPostList = JSON.parse(postList);
-            const parsedList = this.performSearch(term, parsedPostList)
+            const parsedList = this.performSearch(term, parsedPostList);
             matchingPosts = [ ...matchingPosts, ...parsedList];
         });
         return matchingPosts;
@@ -84,7 +83,6 @@ export class SearchService {
                 
             }
         })
-       
         return matchingPosts;
     }
 

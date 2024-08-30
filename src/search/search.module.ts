@@ -6,12 +6,13 @@ import { CacheModule } from '../cache/cache.module';
 import { SearchController } from './search.controller';
 import { SearchService } from './search.service';
 import { PostsService } from '../posts/posts.service';
+import { PostsModule } from '../posts/posts.module';
 
 @Module({
   imports: [
-    HttpModule,
-    CacheModule,
-    RedisModule
+    PostsModule,
+    RedisModule,
+    HttpModule
   ],
   controllers: [SearchController],
   providers: [SearchService, PostsService]

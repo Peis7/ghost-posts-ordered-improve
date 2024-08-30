@@ -7,7 +7,7 @@ import { RedisService } from '../redis/redis.service';
 import { PostWebhookPayload } from '../interfaces/postwebhookpayload';
 import { GHOST_POST_FIELD }  from './interfaces/postfields'
 import { INDEX_TAG_FORMAT, LEVEL_TAG_FORMAT, NO_MENU_TAG } from './constants/ghost';
-import { CACHED_TECH_KEY } from '../constants';
+import { SEARCH_CACHE_OBJECT_KEYS } from '../constants';
 import { isTechStack, TechStack } from './enums/techStack';
 import { Tag } from '../interfaces/tags';
 import { ArrayOfStringPairs } from '../types/custom';
@@ -125,7 +125,7 @@ export class PostsService {
     async getPostDataAndUpdateCache( tech: TechStack,fields: Array<string>, include: Array<string>, filter: ArrayOfStringPairs): Promise<Posts[]> {
         this.clearMalformedCourseStructure(tech);
         const cachedCourseStructure = await this.redisService.get(tech);
-        this.addTechStack(CACHED_TECH_KEY, tech);//TODO: cover test
+        this.addTechStack(SEARCH_CACHE_OBJECT_KEYS.DATA, tech);//TODO: cover test
         if (cachedCourseStructure){
             return JSON.parse(cachedCourseStructure) as Posts[];
         }
@@ -173,11 +173,14 @@ export class PostsService {
 
     private async setTechCache(key, value){
         this.redisService.set(key, value);
-        this.addTechStack(CACHED_TECH_KEY, key);
+        this.addTechStack(SEARCH_CACHE_OBJECT_KEYS.DATA, key);
     }
 
     async storeTechStacks(key: string, techStacks: string[]): Promise<void> {
-        const value = JSON.stringify({ storedTechStacks: techStacks, lastUpdate: new Date() });
+        const value = JSON.stringify({ 
+            [SEARCH_CACHE_OBJECT_KEYS.TECH_ARRAY]: techStacks, 
+            lastUpdate: new Date() 
+        });
         await this.redisService.set(key, value);
       }
     
@@ -185,7 +188,7 @@ export class PostsService {
         const result = await this.redisService.get(key);
         if (result) {
           const parsed = JSON.parse(result);
-          return parsed.storedTechStacks || [];
+          return parsed[SEARCH_CACHE_OBJECT_KEYS.TECH_ARRAY] || [];
         }
         return [];
       }

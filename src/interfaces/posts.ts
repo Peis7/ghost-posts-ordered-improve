@@ -4,6 +4,7 @@ export interface Posts{
     tags?: 
         { name?: string }[],
     url?: String,
+    excerpt?: string,
     slug?: string,
     featured?: Boolean,
     published_at?: Date,
