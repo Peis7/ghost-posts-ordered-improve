@@ -18,14 +18,13 @@ export class SearchService {
  
     async search(term: string): Promise<SearchResult[]> {
         const cachedTech = await this.redisService.get(SEARCH_CACHE_OBJECT_KEYS.DATA);
-        const cachedStacksObject = JSON.parse(cachedTech);
 
-        if (!cachedStacksObject) { // if we have no cached post per stack, we query ghost instance directly
+        if (!cachedTech) { // if we have no cached post per stack, we query ghost instance directly
             let postList = await this.queryPosts([...FIELDS], [...INCLUDE], [...BASE_FILTER]);
             postList = [...this.performSearch(term, postList)];
             return [...this.castPostsToResult(postList)];
         }
-
+        const cachedStacksObject = JSON.parse(cachedTech);
         const techStack = cachedStacksObject[SEARCH_CACHE_OBJECT_KEYS.TECH_ARRAY];
         const POSTS = techStack.map(async (tech)=>{
             return await this.redisService.get(tech)

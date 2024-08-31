@@ -13,7 +13,7 @@ export class PostsController {
   constructor(private postsService: PostsService) {}
 
   @Get('/')
-  async getCourseStructure(@Query('tech') tech: string): Promise<Posts[]>   {
+  async search(@Query('tech') tech: string): Promise<Posts[]>   {
     const filter: ArrayOfStringPairs = [...BASE_FILTER];
     filter.push(['primary_tag',`${tech.toLowerCase()}`]);
     if (!isTechStack(tech)) return [];

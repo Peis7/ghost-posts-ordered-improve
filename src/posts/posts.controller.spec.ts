@@ -69,7 +69,7 @@ describe('PostsController', () => {
   });
 
   it('should return an array of posts', async () => {
-    const result = await controller.getCourseStructure(TechStack.Python.toString());
+    const result = await controller.search(TechStack.Python.toString());
     const filter: ArrayOfStringPairs = [...BASE_FILTER];
     filter.push(['primary_tag',`${TechStack.Python.toLowerCase()}`]);
 
@@ -82,10 +82,10 @@ describe('PostsController', () => {
 
   it('should return an empty array when invalid tech is provided', async () => {
     // Call the controller method
-    const result = await controller.getCourseStructure('InvalidTech');
+    const result = await controller.search('InvalidTech');
 
     // Assert the result
     expect(result).toEqual([]);
     expect(postsService.getPostDataAndUpdateCache).not.toHaveBeenCalled();
-});
+  });
 });
