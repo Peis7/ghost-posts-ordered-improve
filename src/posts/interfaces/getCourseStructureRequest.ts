@@ -1,3 +1,3 @@
-export interface getCourseStructureBody {
+export interface searchBody {
     tech?: string;
 }

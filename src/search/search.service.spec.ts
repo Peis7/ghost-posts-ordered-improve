@@ -12,11 +12,12 @@ import { SearchService } from './search.service';
 import { TechStack } from '../posts/enums/techStack';
 import { PostsService } from '../posts/posts.service';
 import { SEARCH_CACHE_OBJECT_KEYS } from '../constants';
-
+import { BASE_FILTER, FIELDS, INCLUDE } from './constants/ghost';
 
 describe('Posts Service', () => {
   let service: SearchService;
   let mockHttpService: { get: jest.Mock };
+  let mockPostService: { get: jest.Mock };
   const ENV = process.env.NODE_ENV;
   let mockPosts = [];
   let mockPostsProcessedResult = {};
@@ -33,6 +34,9 @@ describe('Posts Service', () => {
       get: jest.fn(),
     };
 
+    mockPostService = {
+      get: jest.fn(),
+    };
     //TODO: move mock data outside
     mockPosts = [
       { id: '1',title: 'Post 1', url: 'url1', slug: 'slug1', featured: true, 
@@ -93,6 +97,7 @@ describe('Posts Service', () => {
                             ]
       };
 
+    mockPostService.get.mockReturnValue(mockPosts );
     mockHttpService.get.mockReturnValue(of({ data: { posts: mockPosts } }));
 
     const module: TestingModule  = await Test.createTestingModule({
@@ -116,8 +121,12 @@ describe('Posts Service', () => {
       ],
       providers: [
         SearchService,
-        PostsService, 
         ConfigService,
+
+        {
+          provide: PostsService,
+          useValue: mockPostService,
+        },
          {
           provide: HttpService,
           useValue: mockHttpService,
@@ -187,12 +196,12 @@ describe('Posts Service', () => {
   it('should return weight = 2 after performing a search with Term = Python funda', async () => {
     const term = "Python funda";
     const expectedSearchResult = {
-        contentType: 'Post',
-        title: 'Python fundamentals',
-        url: 'url1',
-        mainTag: 'python',
-        weight: 2
-    }
+      contentType: 'Post',
+      title: 'Python fundamentals',
+      url: 'url1',
+      mainTag: 'python',
+      weight: 2
+  };
     const result = await service.search(term);
     expect(result.length).toEqual(1);
     expect(result[0]).toEqual(expectedSearchResult);
@@ -243,6 +252,23 @@ describe('Posts Service', () => {
 
     expect(castPostsToResultSpy).toHaveBeenCalledWith(expectedValue);
     expect(castPostsToResultSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it(`should get post data from ghost instance`, async () => {
+    inMemoryCache.clear(); //clear cache
+    const term = "Python Node";
+    const handleCachedSearchSpy = jest.spyOn(service as any, 'handleCachedSearch');
+    const castPostsToResultSpy = jest.spyOn(service as any, 'castPostsToResult');
+    const queryPostsSpy = jest.spyOn(service as any, 'queryPosts');
+    const performSearchSpy = jest.spyOn(service as any, 'performSearch');
+    await service.search(term);
+    expect(handleCachedSearchSpy).toHaveBeenCalledTimes(0);
+    expect(handleCachedSearchSpy).toHaveBeenCalledTimes(0);
+    expect(castPostsToResultSpy).toHaveBeenCalledTimes(1);
+    expect(queryPostsSpy).toHaveBeenCalledTimes(1);
+    expect(performSearchSpy).toHaveBeenCalledTimes(1);
+    expect(queryPostsSpy).toHaveBeenCalledWith([...FIELDS], [...INCLUDE], [...BASE_FILTER]);
+    expect(performSearchSpy).toHaveBeenCalledWith(term, mockPosts);
   });
 
 });
