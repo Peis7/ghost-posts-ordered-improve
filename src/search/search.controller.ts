@@ -9,8 +9,8 @@ export class SearchController {
   constructor(private searchService: SearchService) {}
 
   @Get('/')
-  async search(@Query('term') term: string): Promise<SearchResult[]>   {
-    return this.searchService.search(term); 
+  async search(@Query('term') term: string, @Query('lang') lang: string): Promise<SearchResult[]>   {
+    return this.searchService.search(term, lang); 
   }
 
 }

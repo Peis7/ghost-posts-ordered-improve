@@ -6,7 +6,7 @@ import { Posts } from '../interfaces/posts';
 import { RedisService } from '../redis/redis.service';
 import { PostWebhookPayload } from '../interfaces/postwebhookpayload';
 import { GHOST_POST_FIELD }  from './interfaces/postfields'
-import { INDEX_TAG_FORMAT, LEVEL_TAG_FORMAT, NO_MENU_TAG } from './constants/ghost';
+import { INDEX_TAG_FORMAT, LANG_TAG_FORMAT, LEVEL_TAG_FORMAT, NO_MENU_TAG } from './constants/ghost';
 import { SEARCH_CACHE_OBJECT_KEYS } from '../constants';
 import { isTechStack, TechStack } from './enums/techStack';
 import { Tag } from '../interfaces/tags';
@@ -165,6 +165,7 @@ export class PostsService {
                     published_at: post[GHOST_POST_FIELD.base.PUBLISHED_AT],
                     excerpt: post[GHOST_POST_FIELD.base.EXCERPT],
                     mainTag: this.getMainTag(post[GHOST_POST_FIELD.base.TAGS]),
+                    lang: this.getFirstTagWithPatther(post[GHOST_POST_FIELD.base.TAGS], LANG_TAG_FORMAT),
                 }
             })
         }
