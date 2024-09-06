@@ -22,11 +22,11 @@ describe('Posts Service', () => {
   let mockPosts = [];
   let mockPostsProcessedResult = {};
   let redisService: RedisService;
-
-
+  let lang ='en';
   const inMemoryCache = new Map<string, string>();
 
   beforeEach(async () => {
+    lang = 'en';
     jest.clearAllMocks();
 
     inMemoryCache.clear();
@@ -41,13 +41,13 @@ describe('Posts Service', () => {
     mockPosts = [
       { id: '1',title: 'Post 1', url: 'url1', slug: 'slug1', featured: true, 
         published_at: new Date('1990-02-20T20:11:10.230Z'), excerpt: 'post 1',
-          tags: [{ name: TechStack.Python.toLocaleLowerCase(), slug:'python' },{ name: 'index-1' }, { name: 'no_menu' }] },
+          tags: [{ name: TechStack.Python.toLocaleLowerCase(), slug:'python' },{ name: 'index-1' }, { name: 'no_menu' }, { name: '#lang-en', slug: 'hash-lang-en' }] },
       { id: '2', title: 'Post 2', url: 'url2', slug: 'slug2', featured: false,
          published_at: new Date('1960-06-29T20:11:10.230Z'), excerpt: 'post 2',
-          tags: [{ name: TechStack.TypeScript.toLocaleLowerCase(), slug:'typescript' }, { name: 'index-100' }] },
+          tags: [{ name: TechStack.TypeScript.toLocaleLowerCase(), slug:'typescript' }, { name: 'index-100' }, { name: '#lang-en', slug: 'hash-lang-en' }] },
       { id: '3', title: 'Post 3', url: 'url3', slug: 'slug3', featured: false,
          published_at: new Date('1958-06-29T20:11:10.230Z'), excerpt: 'post 3',
-        tags: [{ name: TechStack.NodeJS.toLocaleLowerCase(), slug:'node.js' }, { name: 'index-50' }] },
+        tags: [{ name: TechStack.NodeJS.toLocaleLowerCase(), slug:'node.js' }, { name: 'index-50' }, { name: '#lang-en', slug: 'hash-lang-en' }] },
     ] as Posts[];
 
     mockPostsProcessedResult = {
@@ -65,6 +65,7 @@ describe('Posts Service', () => {
                                   published_at: new Date('1990-02-20T20:11:10.230Z'),
                                   excerpt: 'For begginers',
                                   mainTag: TechStack.Python.toLocaleLowerCase(),
+                                  lang:'#lang-en'
 
                               }
                             ],
@@ -82,6 +83,7 @@ describe('Posts Service', () => {
                                 published_at: new Date('1960-06-29T20:11:10.230Z'),
                                 excerpt: 'Programming language',
                                 mainTag: TechStack.TypeScript.toLocaleLowerCase(),
+                                lang:'#lang-en'
                               },
                               {
                                 id: '3',
@@ -93,6 +95,7 @@ describe('Posts Service', () => {
                                 published_at: new Date('1958-06-29T20:11:10.230Z'), 
                                 excerpt: 'This is a node post',
                                 mainTag: TechStack.NodeJS.toLocaleLowerCase(),
+                                lang:'#lang-en'
                               }
                             ]
       };
@@ -186,7 +189,7 @@ describe('Posts Service', () => {
         mainTag: 'python',
         weight: 1
     }
-    const result = await service.search(term);
+    const result = await service.search(term, lang);
 
     expect(result.length).toEqual(1);
     expect(result[0]).toEqual(expectedSearchResult);
@@ -202,34 +205,34 @@ describe('Posts Service', () => {
       mainTag: 'python',
       weight: 2
   };
-    const result = await service.search(term);
+    const result = await service.search(term, lang);
     expect(result.length).toEqual(1);
     expect(result[0]).toEqual(expectedSearchResult);
   });
 
   it('should return weight = 3 after performing a search with Term = Python funda beggin', async () => {
     const term = "Python funda beggi";
-    const result = await service.search(term);
+    const result = await service.search(term, lang);
     expect(result.length).toEqual(1);
     expect(result[0].weight).toEqual(3);
   });
 
   it('should return 0 results for terms not part of any post', async () => {
     const term = "Weird words";
-    const result = await service.search(term);
+    const result = await service.search(term, lang);
     expect(result.length).toEqual(0);
   });
 
 
   it('should return 0 results for empty seacrh term', async () => {
     const term = "";
-    const result = await service.search(term);
+    const result = await service.search(term, lang);
     expect(result.length).toEqual(0);
   });
 
   it(`should return all post related to ${ TechStack.Python}  and ${TechStack.NodeJS} `, async () => {
     const term = "Python Node";
-    const result = await service.search(term);
+    const result = await service.search(term, lang);
     const postsCount = mockPostsProcessedResult[TechStack.Python].length + mockPostsProcessedResult[TechStack.NodeJS].length
     expect(result.length).toEqual(postsCount);
   });
@@ -238,14 +241,14 @@ describe('Posts Service', () => {
     const term = "Python Node";
     const handleCachedSearchSpy = jest.spyOn(service as any, 'handleCachedSearch');
     const castPostsToResultSpy = jest.spyOn(service as any, 'castPostsToResult');
-    await service.search(term);
+    await service.search(term, lang);
     expect(handleCachedSearchSpy).toHaveBeenCalledTimes(1);
     const posts = [
       JSON.stringify(mockPostsProcessedResult[TechStack.Python]),
       JSON.stringify(mockPostsProcessedResult[TechStack.NodeJS]),
     ];
 
-    expect(handleCachedSearchSpy).toHaveBeenCalledWith(term, posts);
+    expect(handleCachedSearchSpy).toHaveBeenCalledWith(term, lang, posts);
     expect(handleCachedSearchSpy).toHaveBeenCalledTimes(1);
     const expectedValue = [...mockPostsProcessedResult[TechStack.Python],...mockPostsProcessedResult[TechStack.NodeJS]]
                           .map((obj)=> { return  { ...obj,published_at: obj.published_at.toISOString(), weight: 1 }} );
@@ -261,14 +264,14 @@ describe('Posts Service', () => {
     const castPostsToResultSpy = jest.spyOn(service as any, 'castPostsToResult');
     const queryPostsSpy = jest.spyOn(service as any, 'queryPosts');
     const performSearchSpy = jest.spyOn(service as any, 'performSearch');
-    await service.search(term);
+    await service.search(term, lang);
     expect(handleCachedSearchSpy).toHaveBeenCalledTimes(0);
     expect(handleCachedSearchSpy).toHaveBeenCalledTimes(0);
     expect(castPostsToResultSpy).toHaveBeenCalledTimes(1);
     expect(queryPostsSpy).toHaveBeenCalledTimes(1);
     expect(performSearchSpy).toHaveBeenCalledTimes(1);
     expect(queryPostsSpy).toHaveBeenCalledWith([...FIELDS], [...INCLUDE], [...BASE_FILTER]);
-    expect(performSearchSpy).toHaveBeenCalledWith(term, mockPosts);
+    expect(performSearchSpy).toHaveBeenCalledWith(term, lang, mockPosts);
   });
 
 });
