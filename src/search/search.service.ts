@@ -19,14 +19,16 @@ export class SearchService {
     async search(term: string, lang: string): Promise<SearchResult[]> {
         const cachedTech = await this.redisService.get(SEARCH_CACHE_OBJECT_KEYS.DATA);
         if (!cachedTech) { // if we have no cached post per stack, we query ghost instance directly
-            let postList = await this.queryPosts([...FIELDS], [...INCLUDE], [...BASE_FILTER]);
-            postList = [...this.performSearch(term, lang, postList)];
+            let postList = await this.queryPosts([...FIELDS], [...INCLUDE], [...BASE_FILTER, ['tag', `hash-lang-${lang}`]]);
+            postList = [...this.performSearch(term, postList)];
             return [...this.castPostsToResult(postList)];
         }
         const cachedStacksObject = JSON.parse(cachedTech);
         const techStack = cachedStacksObject[SEARCH_CACHE_OBJECT_KEYS.TECH_ARRAY];
+
         const POSTS = techStack.map(async (tech)=>{
-            return await this.redisService.get(tech)
+            const cacheKey = this.postsService.generateCahceKey([tech, lang]);
+            return await this.redisService.get(cacheKey)
         });
 
         const resolvedPOSTS = await Promise.all(POSTS);
@@ -54,18 +56,18 @@ export class SearchService {
         posts.forEach((postList)=>{
             if (!postList) return;
             const parsedPostList = JSON.parse(postList);
-            const parsedList = this.performSearch(term, lang, parsedPostList);
+            const parsedList = this.performSearch(term, parsedPostList);
             matchingPosts = [ ...matchingPosts, ...parsedList];
         });
         return matchingPosts;
     }
 
-    private performSearch(term: string, lang: string, posts: any[]){
+    private performSearch(term: string, posts: any[]){
         let matchingPosts = [];
         const words = term.trim() === "" ? [] : term.split(/\s+/);
         posts.forEach((post)=>{
             //if (post['no_menu']) return;// exclude post that are not part of the menu
-            if (!post['no_menu'] && post['lang'] == `#lang-${lang}`){
+            if (!post['no_menu']){
                 let count = 0;
                 words.forEach((word)=> {
                     const title = post['title'] ? post['title'].toLowerCase() : '';
