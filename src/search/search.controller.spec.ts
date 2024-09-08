@@ -16,8 +16,10 @@ describe('SearchController', () => {
   let controller: SearchController;
   let searchService: SearchService;
   const ENV = process.env.NODE_ENV;
+  let lang = 'en';
 
   beforeEach(async () => {
+    lang='en';
     jest.clearAllMocks();
     const mockSearchService = {
       search: jest.fn().mockResolvedValue([{
@@ -73,10 +75,10 @@ describe('SearchController', () => {
 
   it('should return an array of posts', async () => {
     const term = "Python";
-    await controller.search(term);
+    await controller.search(term, lang);
     const searchSpy = jest.spyOn(searchService, 'search');
     expect(searchSpy).toHaveBeenCalledTimes(1);
-    expect(searchSpy).toHaveBeenCalledWith(term);
+    expect(searchSpy).toHaveBeenCalledWith(term, lang);
   });
 
 });

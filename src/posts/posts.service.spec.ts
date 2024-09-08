@@ -38,13 +38,13 @@ describe('Posts Service', () => {
     mockPosts = [
       { id: '1',title: 'Post 1', url: 'url1', slug: 'slug1', featured: true, 
         published_at: new Date('1990-02-20T20:11:10.230Z'), excerpt: 'post 1',
-          tags: [{ name: TechStack.Python.toLocaleLowerCase(), slug:'python' },{ name: 'index-1' }, { name: 'no_menu' }] },
+          tags: [{ name: TechStack.Python.toLocaleLowerCase(), slug:'python' },{ name: 'index-1' }, { name: 'no_menu' }, { name: '#lang-en', slug: 'hash-lang-en' }] },
       { id: '2', title: 'Post 2', url: 'url2', slug: 'slug2', featured: false,
          published_at: new Date('1960-06-29T20:11:10.230Z'), excerpt: 'post 2',
-          tags: [{ name: TechStack.TypeScript.toLocaleLowerCase(), slug:'typescript' }, { name: 'index-100' }] },
+          tags: [{ name: TechStack.TypeScript.toLocaleLowerCase(), slug:'typescript' }, { name: 'index-100' }, { name: '#lang-en', slug: 'hash-lang-en' }] },
       { id: '3', title: 'Post 3', url: 'url3', slug: 'slug3', featured: false,
          published_at: new Date('1958-06-29T20:11:10.230Z'), excerpt: 'post 3',
-        tags: [{ name: TechStack.NodeJS.toLocaleLowerCase(), slug:'node.js' }, { name: 'index-50' }] },
+        tags: [{ name: TechStack.NodeJS.toLocaleLowerCase(), slug:'node.js' }, { name: 'index-50' }, { name: '#lang-en', slug: 'hash-lang-en' }] },
     ] as Posts[];
 
     mockPostsProcessedResult = [
@@ -61,6 +61,7 @@ describe('Posts Service', () => {
         published_at: new Date('1990-02-20T20:11:10.230Z'),
         excerpt: 'post 1',
         mainTag: TechStack.Python.toLocaleLowerCase(),
+        lang:'#lang-en'
 
     },
     {
@@ -76,6 +77,7 @@ describe('Posts Service', () => {
       published_at: new Date('1960-06-29T20:11:10.230Z'),
       excerpt: 'post 2',
       mainTag: TechStack.TypeScript.toLocaleLowerCase(),
+      lang:'#lang-en'
     },
     {
       id: '3',
@@ -90,6 +92,7 @@ describe('Posts Service', () => {
       published_at: new Date('1958-06-29T20:11:10.230Z'), 
       excerpt: 'post 3',
       mainTag: TechStack.NodeJS.toLocaleLowerCase(),
+      lang:'#lang-en'
     }
 ,
     ];
@@ -159,7 +162,7 @@ describe('Posts Service', () => {
       const buildUrlSpy = jest.spyOn(service as any, 'buildUrl');
       const posts = await service.getPostDataAndUpdateCache(tech, [], [], []);
       expect(isNewSpy).toHaveBeenCalledTimes(posts.length);
-      expect(getFirstTagWithPattherSpy).toHaveBeenCalledTimes(posts.length*2);
+      expect(getFirstTagWithPattherSpy).toHaveBeenCalledTimes(posts.length*3);
       expect(getIndexFromSpy).toHaveBeenCalledTimes(posts.length);
       expect(buildUrlSpy).toHaveBeenCalledWith([],[],[]);
     });
