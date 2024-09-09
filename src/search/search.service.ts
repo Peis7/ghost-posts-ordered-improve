@@ -28,11 +28,10 @@ export class SearchService {
 
         const POSTS = techStack.map(async (tech)=>{
             const cacheKey = this.postsService.generateCahceKey([tech, lang]);
-            return await this.redisService.get(cacheKey)
+            return await this.redisService.get(cacheKey);
         });
-
         const resolvedPOSTS = await Promise.all(POSTS);
-        const matchingPosts = this.handleCachedSearch(term, lang, resolvedPOSTS);
+        const matchingPosts = this.handleCachedSearch(term, resolvedPOSTS);
 
         let formatedPosts: SearchResult[] = [] ;
 
@@ -51,7 +50,7 @@ export class SearchService {
             };
         });
     }
-    private handleCachedSearch(term: string,  lang: string, posts: any[]) : SearchResult[] {
+    private handleCachedSearch(term: string,  posts: any[]) : SearchResult[] {
         let matchingPosts: SearchResult[] = [];
         posts.forEach((postList)=>{
             if (!postList) return;

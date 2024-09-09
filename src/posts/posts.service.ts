@@ -77,7 +77,7 @@ export class PostsService {
         const tech: TechStack | undefined = TechStack[techStackString as keyof typeof TechStack];
 
         const lang = this.getFirstTagWithPatther(post[GHOST_POST_FIELD.base.TAGS], LANG_TAG_FORMAT);
-        const cacheKey = this.generateCahceKey([tech, lang])
+        const cacheKey = this.generateCahceKey([tech, lang.match(/-(.*)/)[1]])
 
         const cached = await this.redisService.get(cacheKey);
 
@@ -121,8 +121,8 @@ export class PostsService {
         this.setTechCache(cacheKey, JSON.stringify(cachedPosts));
     }
 
-    generateCahceKey(values: Array<string>): string{
-        return values.join('-');
+    public generateCahceKey(values: Array<string>): string{
+        return values.join('_');
     }
     private getTechFromTags(tags: Array<Tag>): string | boolean {
         if (tags.length == 0 ) return false;

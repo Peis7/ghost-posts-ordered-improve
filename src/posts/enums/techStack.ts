@@ -12,12 +12,12 @@ export enum TechStack {
     // Top 10 JavaScript/TypeScript Frameworks
     React = "React",
     Angular = "Angular",
-    Vue = "Vue.js",
+    Vue = "Vuejs",
     Svelte = "Svelte",
-    NextJS = "Next.js",
-    NuxtJS = "Nuxt.js",
+    NextJS = "Nextjs",
+    NuxtJS = "Nuxtjs",
     Express = "Express",
-    NodeJS = "Node.js",
+    NodeJS = "Nodejs",
     NestJS = "NestJS",
     Gatsby = "Gatsby",
 
@@ -30,7 +30,7 @@ export enum TechStack {
     Puppeteer = "Puppeteer",
     Karma = "Karma",
     Ava = "Ava",
-    TestingLibrary = "Testing Library",
+    TestingLibrary = "TestingLibrary",
     Enzyme = "Enzyme",
 
     // Top 10 Python Frameworks
@@ -80,7 +80,7 @@ export enum TechStack {
     MongoDB = "MongoDB",
     SQLite = "SQLite",
     Oracle = "Oracle",
-    MicrosoftSQLServer = "Microsoft SQL Server",
+    MicrosoftSQLServer = "MicrosoftSQLServer",
     Redis = "Redis",
     Elasticsearch = "Elasticsearch",
     Cassandra = "Cassandra",
@@ -89,7 +89,7 @@ export enum TechStack {
     // Top 10 Blockchain Technologies
     Bitcoin = "Bitcoin",
     Ethereum = "Ethereum",
-    BinanceSmartChain = "Binance Smart Chain",
+    BinanceSmartChain = "BinanceSmartChain",
     Cardano = "Cardano",
     Solana = "Solana",
     Polkadot = "Polkadot",
@@ -102,8 +102,8 @@ export enum TechStack {
     Solidity = "Solidity",
     Truffle = "Truffle",
     Hardhat = "Hardhat",
-    EthersJS = "Ethers.js",
-    Web3JS = "Web3.js",
+    EthersJS = "Ethersjs",
+    Web3JS = "Web3js",
     OpenZeppelin = "OpenZeppelin",
     Geth = "Geth",
     Infura = "Infura",
@@ -117,9 +117,9 @@ export enum TechStack {
     zkSync = "zkSync",
     StarkNet = "StarkNet",
     Loopring = "Loopring",
-    ImmutableX = "Immutable X",
+    ImmutableX = "ImmutableX",
     xDAI = "xDAI",
-    BobaNetwork = "Boba Network",
+    BobaNetwork = "BobaNetwork",
     Aztec = "Aztec",
 
     // Blockchain Testing and Development Tools
@@ -131,10 +131,10 @@ export enum TechStack {
 
     // Blockchain Interoperability and Oracles
     ChainlinkVRF = "Chainlink VRF",
-    ChainlinkKeepers = "Chainlink Keepers",
+    ChainlinkKeepers = "ChainlinkKeepers",
     BandProtocol = "Band Protocol",
-    PolkadotParachains = "Polkadot Parachains",
-    CosmosIBC = "Cosmos IBC",
+    PolkadotParachains = "PolkadotParachains",
+    CosmosIBC = "CosmosIBC",
 }
 
 // Creating a Set from the enum values
