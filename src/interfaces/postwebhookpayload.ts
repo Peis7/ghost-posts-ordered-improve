@@ -6,6 +6,7 @@ export interface PostWebhookPayload{
                 title?: string,
                 tags?: Array<any>,
                 slug?: string,
+                url?: string,
                 excerpt?: string,
                 mainTag?: string
             },

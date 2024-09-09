@@ -13,18 +13,25 @@ import { Posts } from '../interfaces/posts';
 import { TechStack } from './enums/techStack';
 import { TestTechStacks } from './test/data';
 import { GHOST_POST_FIELD } from './interfaces/postfields';
-
+import { LANG } from './enums/langs';
+import { KeyPairSyncResult } from 'crypto';
+ 
 
 describe('Posts Service', () => {
   let service: PostsService;
   let mockHttpService: { get: jest.Mock };
   const ENV = process.env.NODE_ENV;
-  let mockPosts = [];
-  let mockPostsProcessedResult= [];
+  let mockPosts = {};
+  let mockPostsProcessedResult= {};
   let redisService: RedisService;
-
-
+  const generateCacheKey = (values:Array<string>): string => values.join('_');
+  const LANGS = ['en','es'];
+  const currentTechLangPair = { tech: TechStack , lang: LANG}
   const inMemoryCache = new Map<string, string>();
+  interface Tag {
+    name: string;
+    slug?: string;
+  }
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -35,7 +42,7 @@ describe('Posts Service', () => {
     };
 
     //TODO: move mock data outside
-    mockPosts = [
+    const mockPosts1 = [
       { id: '1',title: 'Post 1', url: 'url1', slug: 'slug1', featured: true, 
         published_at: new Date('1990-02-20T20:11:10.230Z'), excerpt: 'post 1',
           tags: [{ name: TechStack.Python.toLocaleLowerCase(), slug:'python' },{ name: 'index-1' }, { name: 'no_menu' }, { name: '#lang-en', slug: 'hash-lang-en' }] },
@@ -44,10 +51,11 @@ describe('Posts Service', () => {
           tags: [{ name: TechStack.TypeScript.toLocaleLowerCase(), slug:'typescript' }, { name: 'index-100' }, { name: '#lang-en', slug: 'hash-lang-en' }] },
       { id: '3', title: 'Post 3', url: 'url3', slug: 'slug3', featured: false,
          published_at: new Date('1958-06-29T20:11:10.230Z'), excerpt: 'post 3',
-        tags: [{ name: TechStack.NodeJS.toLocaleLowerCase(), slug:'node.js' }, { name: 'index-50' }, { name: '#lang-en', slug: 'hash-lang-en' }] },
+        tags: [{ name: TechStack.NodeJS.toLocaleLowerCase(), slug:'nodejs' }, { name: 'index-50' }, { name: '#lang-en', slug: 'hash-lang-en' }] },
     ] as Posts[];
 
-    mockPostsProcessedResult = [
+
+    const mockPostsProcessedResult1 = [
       {
         id: '1',
         index: 1,
@@ -97,7 +105,51 @@ describe('Posts Service', () => {
 ,
     ];
 
-    mockHttpService.get.mockReturnValue(of({ data: { posts: mockPosts } }));
+    LANGS.forEach((_lang) => {
+      TestTechStacks.forEach((tech, index) => {
+        const no_menu = Math.random() >= 0.5;
+        const featured = Math.random() >= 0.5;
+        const tags: Tag[] = [
+          { name: tech.toLocaleLowerCase(), slug:tech.toLocaleLowerCase() },
+          { name: `#lang-${_lang}`, slug: `hash-lang-${_lang}` }
+        ]
+        if (no_menu){
+          tags.push({ name: 'no_menu' });
+        }{
+          tags.push({ name: `index-${index}` });
+        }
+        const post = { 
+          id: index,
+          title: `Post ${index}`,
+          url: 'url1', 
+          slug: 'slug1', 
+          featured, 
+          published_at: new Date('1990-02-20T20:11:10.230Z'), 
+          excerpt: `Post excerpt ${index}`,
+          tags
+         };
+
+         mockPosts[generateCacheKey([tech, _lang])] = [post];
+
+        const postResult = {
+          id: index,
+          index: index,
+          title: `Post ${index}`,
+          level: null,
+          no_menu,
+          url: 'url1',
+          slug: 'slug1',
+          featured,
+          new: false,
+          published_at: new Date('1990-02-20T20:11:10.230Z'),
+          excerpt: `Post excerpt ${index}`,
+          mainTag: tech.toLocaleLowerCase(),
+          lang:`#lang-${_lang}`
+        }
+        mockPostsProcessedResult[generateCacheKey([tech, _lang])] = [postResult];
+      });
+    });
+
 
     const module: TestingModule  = await Test.createTestingModule({
       imports: [
@@ -146,114 +198,125 @@ describe('Posts Service', () => {
       return Promise.resolve(value);
     });
     
+
+
   });
+
 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
 
+  LANGS.forEach((_lang) => {
+      TestTechStacks.forEach((tech) => {
 
-  TestTechStacks.forEach((tech) => {
-    it(`should get course posts array and update cache: ${tech}`, async () => {
-      const isNewSpy = jest.spyOn(service as any, 'isNew');
-      const getFirstTagWithPattherSpy = jest.spyOn(service as any, 'getFirstTagWithPatther');
-      const getIndexFromSpy = jest.spyOn(service as any, 'getIndexFrom');
-      const buildUrlSpy = jest.spyOn(service as any, 'buildUrl');
-      const posts = await service.getPostDataAndUpdateCache(tech, [], [], []);
-      expect(isNewSpy).toHaveBeenCalledTimes(posts.length);
-      expect(getFirstTagWithPattherSpy).toHaveBeenCalledTimes(posts.length*3);
-      expect(getIndexFromSpy).toHaveBeenCalledTimes(posts.length);
-      expect(buildUrlSpy).toHaveBeenCalledWith([],[],[]);
-    });
+        it(`should get course posts array and update cache: ${tech}`, async () => {
+          mockHttpService.get.mockReturnValue(of({ data: { posts: mockPosts[generateCacheKey([tech.toString(), _lang.toString()])] } }));
+          const isNewSpy = jest.spyOn(service as any, 'isNew');
+          const getFirstTagWithPattherSpy = jest.spyOn(service as any, 'getFirstTagWithPatther');
+          const getIndexFromSpy = jest.spyOn(service as any, 'getIndexFrom');
+          const buildUrlSpy = jest.spyOn(service as any, 'buildUrl');
+          const posts = await service.getPostDataAndUpdateCache(tech, _lang as LANG, [], [], []);
+          expect(isNewSpy).toHaveBeenCalledTimes(posts.length);
+          expect(getFirstTagWithPattherSpy).toHaveBeenCalledTimes(posts.length*3);
+          expect(getIndexFromSpy).toHaveBeenCalledTimes(posts.length);
+          expect(buildUrlSpy).toHaveBeenCalledWith([],[],[]);
+        });
 
-    it('should return an array of posts', async () => {
-      const spyGet = jest.spyOn(service, 'getPostDataAndUpdateCache');
-      const result = await service.getPostDataAndUpdateCache(tech, ['some'], ['value'], [['tag','python']]);
-      expect(result).toEqual(mockPostsProcessedResult);
-      expect(spyGet).toHaveBeenCalledWith(tech, ['some'], ['value'], [['tag','python']] );
-    });
+        it('should return an array of posts', async () => {
+          mockHttpService.get.mockReturnValue(of({ data: { posts: mockPosts[generateCacheKey([tech.toString(), _lang.toString()])] } }));
+          const spyGet = jest.spyOn(service, 'getPostDataAndUpdateCache');
+          const result = await service.getPostDataAndUpdateCache(tech,  _lang as LANG, ['some'], ['value'], [['tag','python']]);
+          expect(result).toEqual(mockPostsProcessedResult[generateCacheKey([tech, _lang])]);
+          expect(spyGet).toHaveBeenCalledWith(tech, _lang, ['some'], ['value'], [['tag','python']] );
+        });
 
-    it(`should update cache data for course of ${tech}`, async () => {
-      inMemoryCache.delete(tech);
-      const setTechCacheSpy = jest.spyOn(redisService, 'set');
-      const spySetCahce = jest.spyOn(service as any, 'setTechCache');
-      const postData = await service.getPostDataAndUpdateCache(tech, ['some'], ['value'],[['tag','python']]);
+        it(`should update cache data for course of ${tech}`, async () => {
+          mockHttpService.get.mockReturnValue(of({ data: { posts: mockPosts[generateCacheKey([tech.toString(), _lang.toString()])] } }));
+          inMemoryCache.delete(tech);
+          const setTechCacheSpy = jest.spyOn(redisService, 'set');
+          const spySetCahce = jest.spyOn(service as any, 'setTechCache');
+          const postData = await service.getPostDataAndUpdateCache(tech,  _lang as LANG, ['some'], ['value'],[['tag','python']]);
 
-      expect(spySetCahce).toHaveBeenCalledTimes(1);
-      expect(spySetCahce).toHaveBeenCalledWith(tech, JSON.stringify(mockPostsProcessedResult));
+          expect(spySetCahce).toHaveBeenCalledTimes(1);
+          expect(spySetCahce).toHaveBeenCalledWith(generateCacheKey([tech, _lang]), JSON.stringify(mockPostsProcessedResult[generateCacheKey([tech, _lang])]));
 
-      expect(setTechCacheSpy).toHaveBeenCalledTimes(2);
-      expect(setTechCacheSpy).toHaveBeenCalledWith(tech, JSON.stringify(mockPostsProcessedResult));
-      const cachedValue = await redisService.get(tech);
-      expect(cachedValue).toBeTruthy();
-      expect(cachedValue).toBe(JSON.stringify(mockPostsProcessedResult));
-      expect(postData).toStrictEqual(mockPostsProcessedResult);
-    });
+          expect(setTechCacheSpy).toHaveBeenCalledTimes(2);
+          expect(setTechCacheSpy).toHaveBeenCalledWith(generateCacheKey([tech, _lang]), JSON.stringify(mockPostsProcessedResult[generateCacheKey([tech, _lang])]));
+          const cachedValue = await redisService.get(generateCacheKey([tech, _lang]));
+          expect(cachedValue).toBeTruthy();
+          expect(cachedValue).toBe(JSON.stringify(mockPostsProcessedResult[generateCacheKey([tech, _lang])]));
+          expect(postData).toStrictEqual(mockPostsProcessedResult[generateCacheKey([tech, _lang])]);
+        });
 
-    it(`should return cached data and NOT update cache for course of ${tech}`, async () => {
-      
-      await redisService.set(tech, JSON.stringify(mockPostsProcessedResult));
-      const spySet = jest.spyOn(redisService, 'set');
-      const spyGet = jest.spyOn(redisService, 'get');
-      const spySetCahce = jest.spyOn(service as any, 'setTechCache');
-      const postData = await service.getPostDataAndUpdateCache(tech, ['some'], ['value'],[['tag','python']]);
+        it(`should return cached data and NOT update cache for course of ${tech}`, async () => {
+          mockHttpService.get.mockReturnValue(of({ data: { posts: mockPosts[generateCacheKey([tech.toString(), _lang.toString()])] } }));
+          await redisService.set(generateCacheKey([tech, _lang]), JSON.stringify(mockPostsProcessedResult[generateCacheKey([tech, _lang])]));
+          const spySet = jest.spyOn(redisService, 'set');
+          const spyGet = jest.spyOn(redisService, 'get');
+          const spySetCahce = jest.spyOn(service as any, 'setTechCache');
+          const postData = await service.getPostDataAndUpdateCache(tech,  _lang as LANG, ['some'], ['value'],[['tag','python']]);
 
-      expect(spySetCahce).toHaveBeenCalledTimes(0);
-      expect(spySet).toHaveBeenCalledTimes(1);
-      expect(spyGet).toHaveBeenCalledTimes(3);
-      const cachedValue = await redisService.get(tech);
-      expect(cachedValue).toBeTruthy();
-      expect(cachedValue).toBe(JSON.stringify(mockPostsProcessedResult));
-      const result = mockPostsProcessedResult.map((obj)=> { return { ...obj,published_at: obj.published_at.toISOString() } });
-      expect(postData).toStrictEqual(result);
-    });
+          expect(spySetCahce).toHaveBeenCalledTimes(0);
+          expect(spySet).toHaveBeenCalledTimes(1);
+          expect(spyGet).toHaveBeenCalledTimes(3);
+          const cachedValue = await redisService.get(generateCacheKey([tech, _lang]));
+          expect(cachedValue).toBeTruthy();
+          expect(cachedValue).toBe(JSON.stringify(mockPostsProcessedResult[generateCacheKey([tech, _lang])]));
+          const result = mockPostsProcessedResult[generateCacheKey([tech, _lang])].map((obj)=> { return { ...obj,published_at: obj.published_at.toISOString() } });
+          expect(postData).toStrictEqual(result);
+        });
 
-    it(`should add published post to course structure ${tech}`, async () => {
-      const spySet = jest.spyOn(redisService, 'set');
-      const spyGet = jest.spyOn(redisService, 'get');
-      const spyGetTechFromTags = jest.spyOn(service as any, 'getTechFromTags');
-      const spySetCahce = jest.spyOn(service as any, 'setTechCache');
-      const testPost = {...mockPosts[mockPosts.length - 1],id: '4', tags: [{name: tech} ]}; //get a copy of last test post to publish
-      const lengthBeforePublishedPost = inMemoryCache.size;
-      await service.handlePublished(testPost);
-      expect(spySetCahce).toHaveBeenCalledTimes(1);
-      expect(spyGetTechFromTags).toHaveBeenCalledTimes(1);
-      expect(spySet).toHaveBeenCalledTimes(1);
-      expect(inMemoryCache.size).toBe(lengthBeforePublishedPost + 1);
-    });
+        it(`should add published post to course structure ${tech}`, async () => {
+          mockHttpService.get.mockReturnValue(of({ data: { posts: mockPosts[generateCacheKey([tech.toString(), _lang.toString()])] } }));
+          const spySet = jest.spyOn(redisService, 'set');
+          const spyGet = jest.spyOn(redisService, 'get');
+          const spyGetTechFromTags = jest.spyOn(service as any, 'getTechFromTags');
+          const spySetCahce = jest.spyOn(service as any, 'setTechCache');
+          const testPost = {...mockPosts[generateCacheKey([tech, _lang])][mockPosts[generateCacheKey([tech, _lang])].length - 1],id: '4', tags: [{name: tech} ]}; //get a copy of last test post to publish
+          const lengthBeforePublishedPost = inMemoryCache.size;
+          await service.handlePublished(testPost);
+          expect(spySetCahce).toHaveBeenCalledTimes(1);
+          expect(spyGetTechFromTags).toHaveBeenCalledTimes(1);
+          expect(spySet).toHaveBeenCalledTimes(1);
+          expect(inMemoryCache.size).toBe(lengthBeforePublishedPost + 1);
+        });
 
-    it(`should remove post from cache when post is unpublished and update cached value for: ${tech}`, async () => {
-      await redisService.set(tech, JSON.stringify(mockPostsProcessedResult));//set a value in cache
-      const spyGet = jest.spyOn(redisService, 'get');
-      const spySetCahce = jest.spyOn(service as any, 'setTechCache');
-      const testPost = mockPosts[mockPosts.length - 1]; //get a copy of last test post to upublish
-      testPost['tags'].unshift({name: tech});//add  the main tag [ index 0 ]
-      await service.handleUnpublished(testPost);
-      const cachedValueAfterUnpublished = await redisService.get(tech);
-      const expectedCourseStructure =  mockPostsProcessedResult.
-                                        filter((post)=>post[GHOST_POST_FIELD.base.ID] != testPost[GHOST_POST_FIELD.base.ID])
-                                           .map((obj)=> { return { ...obj,published_at: obj.published_at.toISOString() } });
-      expect(spySetCahce).toHaveBeenCalledTimes(1);
-      expect(spyGet).toHaveBeenCalledTimes(3);
-      expect(JSON.parse(cachedValueAfterUnpublished)).toStrictEqual(expectedCourseStructure);
-    });
+        it(`should remove post from cache when post is unpublished and update cached value for: ${tech}`, async () => {
+          mockHttpService.get.mockReturnValue(of({ data: { posts: mockPosts[generateCacheKey([tech.toString(), _lang.toString()])] } }));
+          await redisService.set(generateCacheKey([tech, _lang]), JSON.stringify(mockPostsProcessedResult[generateCacheKey([tech, _lang])]));//set a value in cache
+          const spyGet = jest.spyOn(redisService, 'get');
+          const spySetCahce = jest.spyOn(service as any, 'setTechCache');
+          const testPost = mockPosts[generateCacheKey([tech, _lang])][mockPosts[generateCacheKey([tech, _lang])].length - 1]; //get a copy of last test post to upublish
+          testPost['tags'].unshift({name: tech});//add  the main tag [ index 0 ]
+          await service.handleUnpublished(testPost);
+          const cachedValueAfterUnpublished = await redisService.get(generateCacheKey([tech, _lang]));
+          const expectedCourseStructure =  mockPostsProcessedResult[generateCacheKey([tech, _lang])].
+                                            filter((post)=>post[GHOST_POST_FIELD.base.ID] != testPost[GHOST_POST_FIELD.base.ID])
+                                              .map((obj)=> { return { ...obj,published_at: obj.published_at.toISOString() } });
+          expect(spySetCahce).toHaveBeenCalledTimes(1);
+          expect(spyGet).toHaveBeenCalledTimes(3);
+          expect(JSON.parse(cachedValueAfterUnpublished)).toStrictEqual(expectedCourseStructure);
+        });
 
-    it(`should remove post from cache when post is deleted and update cached value for: ${tech}`, async () => {
-      await redisService.set(tech, JSON.stringify(mockPostsProcessedResult));//set a value in cache
-      const spyGet = jest.spyOn(redisService, 'get');
-      const spySetCahce = jest.spyOn(service as any, 'setTechCache');
-      const testPost = mockPosts[mockPosts.length - 1]; //get a copy of last test post to upublish
-      testPost['tags'].unshift({name: tech});//add  the main tag [ index 0 ]
-      await service.handleDeleted(testPost);
-      const cachedValueAfterUnpublished = await redisService.get(tech);
-      const expectedCourseStructure = mockPostsProcessedResult.
-                            filter((post)=>post[GHOST_POST_FIELD.base.ID] != testPost[GHOST_POST_FIELD.base.ID])
-                              .map((obj)=> { return { ...obj,published_at: obj.published_at.toISOString() } });
-      expect(spySetCahce).toHaveBeenCalledTimes(1);
-      expect(spyGet).toHaveBeenCalledTimes(3);
-      expect(JSON.parse(cachedValueAfterUnpublished)).toStrictEqual(expectedCourseStructure);
-    });
+        it(`should remove post from cache when post is deleted and update cached value for: ${tech}`, async () => {
+          mockHttpService.get.mockReturnValue(of({ data: { posts: mockPosts[generateCacheKey([tech.toString(), _lang.toString()])] } }));
+          await redisService.set(generateCacheKey([tech, _lang]), JSON.stringify(mockPostsProcessedResult[generateCacheKey([tech, _lang])]));//set a value in cache
+          const spyGet = jest.spyOn(redisService, 'get');
+          const spySetCahce = jest.spyOn(service as any, 'setTechCache');
+          const testPost = mockPosts[generateCacheKey([tech, _lang])][mockPosts[generateCacheKey([tech, _lang])].length - 1]; //get a copy of last test post to upublish
+          testPost['tags'].unshift({name: tech});//add  the main tag [ index 0 ]
+          await service.handleDeleted(testPost);
+          const cachedValueAfterUnpublished = await redisService.get(generateCacheKey([tech, _lang]));
+          const expectedCourseStructure = mockPostsProcessedResult[generateCacheKey([tech, _lang])].
+                                filter((post)=>post[GHOST_POST_FIELD.base.ID] != testPost[GHOST_POST_FIELD.base.ID])
+                                  .map((obj)=> { return { ...obj,published_at: obj.published_at.toISOString() } });
+          expect(spySetCahce).toHaveBeenCalledTimes(1);
+          expect(spyGet).toHaveBeenCalledTimes(3);
+          expect(JSON.parse(cachedValueAfterUnpublished)).toStrictEqual(expectedCourseStructure);
+        });
+      });
   });
 });
 

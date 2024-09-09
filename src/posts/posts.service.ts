@@ -11,6 +11,7 @@ import { SEARCH_CACHE_OBJECT_KEYS } from '../constants';
 import { isTechStack, TechStack } from './enums/techStack';
 import { Tag } from '../interfaces/tags';
 import { ArrayOfStringPairs } from '../types/custom';
+import { LANG } from './enums/langs';
 
 @Injectable()
 export class PostsService {
@@ -25,6 +26,7 @@ export class PostsService {
         const updatedTitle = data?.body?.post?.current?.title;
         const slug =  data?.body?.post?.current?.slug;
         const tags = data?.body?.post?.current?.tags;
+        const url = data?.body?.post?.current?.url;
         const excerpt = data?.body?.post?.current?.excerpt;
         const mainTag = data?.body?.post?.current?.mainTag;
         const techStackString: string | boolean = this.getTechFromTags(data?.body?.post?.current?.tags);
@@ -33,9 +35,9 @@ export class PostsService {
 
 
         if (!tech) return; //TODO: return a meaninful message
-        
-        const cached = await this.redisService.get(tech);
-
+        const lang = this.getFirstTagWithPatther(tags, LANG_TAG_FORMAT);
+        const cacheKey = this.generateCahceKey([tech, lang.match(/-(.*)/)[1]]);
+        const cached = await this.redisService.get(cacheKey);
         if (!cached) return;
 
         //so far, we know that there is data
@@ -52,14 +54,15 @@ export class PostsService {
                         no_menu: tags ? (this.getFirstTagWithPatther(tags, NO_MENU_TAG) ? true : false) : post[GHOST_POST_FIELD.calculated.NO_MENU],
                         slug: slug || post[GHOST_POST_FIELD.base.SLUG],
                         excerpt: excerpt || post[GHOST_POST_FIELD.base.EXCERPT],
-                        mainTag: mainTag || this.getMainTag(post[GHOST_POST_FIELD.base.TAGS]),
+                        mainTag: mainTag || this.getMainTag(tags || post[GHOST_POST_FIELD.base.TAGS]),
+                        url: url || post[GHOST_POST_FIELD.base.URL],
                     }
                     return updatedPost;
             }
             return post; 
         });
 
-        await this.setTechCache(tech, JSON.stringify(postData));
+        await this.setTechCache(cacheKey, JSON.stringify(postData));
     }
 
     async handleDeleted(post: Posts): Promise<void>{
@@ -72,7 +75,11 @@ export class PostsService {
     private async removePostFromCache(post: Posts): Promise<void>{
         const techStackString: string | boolean = this.getTechFromTags(post[GHOST_POST_FIELD.base.TAGS]);
         const tech: TechStack | undefined = TechStack[techStackString as keyof typeof TechStack];
-        const cached = await this.redisService.get(tech);
+
+        const lang = this.getFirstTagWithPatther(post[GHOST_POST_FIELD.base.TAGS], LANG_TAG_FORMAT);
+        const cacheKey = this.generateCahceKey([tech, lang.match(/-(.*)/)[1]])
+
+        const cached = await this.redisService.get(cacheKey);
 
         if (!cached) return;
 
@@ -80,7 +87,8 @@ export class PostsService {
         if (!(postData instanceof Array)) return;
         
         postData = postData.filter((cachedpost)=> cachedpost[GHOST_POST_FIELD.base.ID] !== post[GHOST_POST_FIELD.base.ID] );
-        await this.setTechCache(tech, JSON.stringify(postData));
+
+        await this.setTechCache(cacheKey, JSON.stringify(postData));
         return;
     }
 
@@ -100,37 +108,45 @@ export class PostsService {
             new: this.isNew(post[GHOST_POST_FIELD.base.PUBLISHED_AT]),
             mainTag: this.getMainTag(post[GHOST_POST_FIELD.base.TAGS]),
         }
-        const cachedCourseStructure = await this.redisService.get(tech);
+        const lang = this.getFirstTagWithPatther(post[GHOST_POST_FIELD.base.TAGS], LANG_TAG_FORMAT);
+        const cacheKey = this.generateCahceKey([tech, lang]);
+
+        const cachedCourseStructure = await this.redisService.get(cacheKey);
         let cachedPosts:Posts[] = []
         if (cachedCourseStructure){
             cachedPosts = JSON.parse(cachedCourseStructure) as Posts[];
         }
         cachedPosts.push(publishedPostFormatedData);
-        this.setTechCache(tech, JSON.stringify(cachedPosts));
+
+        this.setTechCache(cacheKey, JSON.stringify(cachedPosts));
     }
 
+    public generateCahceKey(values: Array<string>): string{
+        return values.join('_');
+    }
     private getTechFromTags(tags: Array<Tag>): string | boolean {
         if (tags.length == 0 ) return false;
         let mainTag = tags[0];
         return (mainTag.name && isTechStack(this.capitalizeFirstLetter(mainTag.name))) ? this.capitalizeFirstLetter(mainTag.name) : false;
     }
 
-    private async clearMalformedCourseStructure( tech: TechStack): Promise<void>{
-        const cachedData = await this.redisService.get(tech);
+    private async clearMalformedCourseStructure( key: string): Promise<void>{
+        const cachedData = await this.redisService.get(key);
         if (!cachedData) return;
         let parsedData = JSON.parse(cachedData);
-        if (!(parsedData instanceof Array)) this.redisService.delete(tech);
+        if (!(parsedData instanceof Array)) this.redisService.delete(key);
     }
 
-    async getPostDataAndUpdateCache( tech: TechStack,fields: Array<string>, include: Array<string>, filter: ArrayOfStringPairs): Promise<Posts[]> {
-        this.clearMalformedCourseStructure(tech);
-        const cachedCourseStructure = await this.redisService.get(tech);
+    async getPostDataAndUpdateCache( tech: TechStack, lang: LANG,fields: Array<string>, include: Array<string>, filter: ArrayOfStringPairs): Promise<Posts[]> {
+        const cacheKey = this.generateCahceKey([tech, lang]);
+        this.clearMalformedCourseStructure(cacheKey);
+        const cachedCourseStructure = await this.redisService.get(cacheKey);
         this.addTechStack(SEARCH_CACHE_OBJECT_KEYS.DATA, tech);//TODO: cover test
         if (cachedCourseStructure){
             return JSON.parse(cachedCourseStructure) as Posts[];
         }
         const postData = await this.get(fields, include, filter);
-        this.setTechCache(tech, JSON.stringify(postData));
+        this.setTechCache(cacheKey, JSON.stringify(postData));
         return postData;
     }
     

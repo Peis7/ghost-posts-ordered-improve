@@ -6,6 +6,7 @@ import { PostWebhookPayload } from '../interfaces/postwebhookpayload';
 import { FIELDS, BASE_FILTER, INCLUDE } from './constants/ghost';
 import { isTechStack } from './enums/techStack';
 import { ArrayOfStringPairs } from '../types/custom';
+import { LANG } from './enums/langs';
 
 @UseGuards(ThrottlerGuard)
 @Controller('v1/posts')
@@ -13,17 +14,17 @@ export class PostsController {
   constructor(private postsService: PostsService) {}
 
   @Get('/')
-  async search(@Query('tech') tech: string): Promise<Posts[]>   {
+  async search(@Query('tech') tech: string, @Query('lang') lang: string): Promise<Posts[]>   {
     const filter: ArrayOfStringPairs = [...BASE_FILTER];
     filter.push(['primary_tag',`${tech.toLowerCase()}`]);
+    filter.push(['tag', `hash-lang-${lang}`]);
     if (!isTechStack(tech)) return [];
-    return this.postsService.getPostDataAndUpdateCache(tech, [...FIELDS], [...INCLUDE], filter);
+    return this.postsService.getPostDataAndUpdateCache(tech, lang as LANG, [...FIELDS], [...INCLUDE], filter);
   }
 
   @Post('/updatecache')
   async updateCache(@Req() request: Request): Promise<void>   {
     const { body } = request as PostWebhookPayload; 
-    
     const parsedBody: PostWebhookPayload = {
      body:{ 
         post: {
@@ -31,6 +32,7 @@ export class PostsController {
                 id: body?.post?.current?.id || '',
                 tags: body?.post?.current?.tags || [],
                 slug: body?.post?.current?.slug || '',
+                url: body?.post?.current?.url || '',
                 title: body?.post?.current?.title || '',
                 excerpt: body?.post?.current?.excerpt || '',
                 mainTag: body?.post?.current?.mainTag || '',

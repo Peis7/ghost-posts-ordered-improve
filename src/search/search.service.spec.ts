@@ -17,14 +17,14 @@ import { BASE_FILTER, FIELDS, INCLUDE } from './constants/ghost';
 describe('Posts Service', () => {
   let service: SearchService;
   let mockHttpService: { get: jest.Mock };
-  let mockPostService: { get: jest.Mock };
+  let mockPostService: { get: jest.Mock , generateCahceKey: jest.Mock};
   const ENV = process.env.NODE_ENV;
   let mockPosts = [];
   let mockPostsProcessedResult = {};
   let redisService: RedisService;
   const LANGS = ['en','es'];
   const inMemoryCache = new Map<string, string>();
-
+  const generateCacheKey = (values:Array<string>): string => values.join('_');
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -35,6 +35,7 @@ describe('Posts Service', () => {
 
     mockPostService = {
       get: jest.fn(),
+      generateCahceKey: jest.fn(),
     };
     //TODO: move mock data outside
     mockPosts = [
@@ -59,8 +60,8 @@ describe('Posts Service', () => {
 
     mockPosts = [...englishPosts, ...spanishPosts];
 
-    mockPostsProcessedResult[LANGS[0]] = {
-        [TechStack.Python] : [
+    mockPostsProcessedResult = {
+        [generateCacheKey([TechStack.Python, LANGS[0]])] : [
                               {
                                   id: '1',
                                   index: 1,
@@ -78,7 +79,7 @@ describe('Posts Service', () => {
 
                               }
                             ],
-      [TechStack.NodeJS] : [
+      [generateCacheKey([TechStack.NodeJS, LANGS[0]])] : [
                               {
                                 id: '2',
                                 index: 100,
@@ -111,13 +112,13 @@ describe('Posts Service', () => {
 
       LANGS.forEach((_lang) => {
         if (_lang !== LANGS[0]){
-          mockPostsProcessedResult['es'] = {
-            [TechStack.Python] : 
-            [...mockPostsProcessedResult[LANGS[0]][TechStack.Python].map((postResult) => {
+          mockPostsProcessedResult = {...mockPostsProcessedResult,
+            [generateCacheKey([TechStack.Python, _lang])] : 
+            [...mockPostsProcessedResult[generateCacheKey([TechStack.Python, LANGS[0]])].map((postResult) => {
                 return {...postResult, lang: `#lang-${_lang}`}
             })], 
-            [TechStack.NodeJS]: 
-            [...mockPostsProcessedResult[LANGS[0]][TechStack.NodeJS].map((postResult) => {
+            [generateCacheKey([TechStack.NodeJS, _lang])]: 
+            [...mockPostsProcessedResult[generateCacheKey([TechStack.NodeJS, LANGS[0]])].map((postResult) => {
                 return {...postResult, lang: `#lang-${_lang}`}
             })]
           };
@@ -126,6 +127,7 @@ describe('Posts Service', () => {
 
 
     mockPostService.get.mockReturnValue(mockPosts );
+    mockPostService.generateCahceKey.mockImplementation((values:Array<string>) => values.join('_'))
     mockHttpService.get.mockReturnValue(of({ data: { posts: mockPosts } }));
 
     const module: TestingModule  = await Test.createTestingModule({
@@ -189,24 +191,28 @@ describe('Posts Service', () => {
           )
     );
     
-    let pythonES = [];
-    LANGS.forEach((_lang)=> { 
-      pythonES = [...pythonES, ...mockPostsProcessedResult[_lang][TechStack.Python]]
-    });
-    redisService.set(
-      TechStack.Python, 
-      JSON.stringify( pythonES )
-    );
 
-    let nodeES = [];
+
+   
     LANGS.forEach((_lang)=> { 
-      nodeES = [...nodeES, ...mockPostsProcessedResult[_lang][TechStack.NodeJS]]
+      let pythonES = [];
+      pythonES = [...mockPostsProcessedResult[generateCacheKey([TechStack.Python, _lang])]];
+      redisService.set(
+        generateCacheKey([TechStack.Python, _lang]), 
+        JSON.stringify( pythonES )
+      );
+    });
+
+    LANGS.forEach((_lang)=> { 
+      let nodeES = [];
+      nodeES = [...mockPostsProcessedResult[generateCacheKey([TechStack.NodeJS, _lang])]];
+      redisService.set(
+        generateCacheKey([TechStack.NodeJS, _lang]), 
+        JSON.stringify( nodeES )
+      );
     } );
 
-    redisService.set(
-      TechStack.NodeJS, 
-      JSON.stringify( nodeES )
-    );
+
 
   });
 
@@ -268,7 +274,7 @@ describe('Posts Service', () => {
     it(`should return all post related to ${ TechStack.Python}  and ${TechStack.NodeJS} `, async () => {
       const term = "Python Node";
       const result = await service.search(term, lang);
-      const postsCount = mockPostsProcessedResult[lang][TechStack.Python].length + mockPostsProcessedResult[lang][TechStack.NodeJS].length
+      const postsCount = mockPostsProcessedResult[generateCacheKey([TechStack.Python, lang])].length + mockPostsProcessedResult[generateCacheKey([TechStack.NodeJS, lang])].length
       expect(result.length).toEqual(postsCount);
     });
   
@@ -279,24 +285,20 @@ describe('Posts Service', () => {
       await service.search(term, lang);
       expect(handleCachedSearchSpy).toHaveBeenCalledTimes(1);
       let pythonPosts = [ ];
-      LANGS.forEach((_lang)=>{
-        pythonPosts = [...pythonPosts, ...mockPostsProcessedResult[_lang][TechStack.Python]]
-      });
+      pythonPosts = [...pythonPosts, ...mockPostsProcessedResult[generateCacheKey([TechStack.Python, lang])]];
+
 
       let nodePosts = [ ];
-      LANGS.forEach((_lang)=>{
-        nodePosts = [...nodePosts, ...mockPostsProcessedResult[_lang][TechStack.NodeJS]]
-      })
-
+      nodePosts = [...nodePosts, ...mockPostsProcessedResult[generateCacheKey([TechStack.NodeJS, lang])]];
 
       const posts = [
         JSON.stringify(pythonPosts),
         JSON.stringify(nodePosts),
       ];
   
-      expect(handleCachedSearchSpy).toHaveBeenCalledWith(term, lang, posts);
+      expect(handleCachedSearchSpy).toHaveBeenCalledWith(term, posts);
       expect(handleCachedSearchSpy).toHaveBeenCalledTimes(1);
-      const expectedValue = [...mockPostsProcessedResult[lang][TechStack.Python],...mockPostsProcessedResult[lang][TechStack.NodeJS]]
+      const expectedValue = [...mockPostsProcessedResult[generateCacheKey([TechStack.Python, lang])],...mockPostsProcessedResult[generateCacheKey([TechStack.NodeJS, lang])]]
                             .map((obj)=> { return  { ...obj,published_at: obj.published_at.toISOString(), weight: 1 }} );
   
       expect(castPostsToResultSpy).toHaveBeenCalledWith(expectedValue);
@@ -316,8 +318,8 @@ describe('Posts Service', () => {
       expect(castPostsToResultSpy).toHaveBeenCalledTimes(1);
       expect(queryPostsSpy).toHaveBeenCalledTimes(1);
       expect(performSearchSpy).toHaveBeenCalledTimes(1);
-      expect(queryPostsSpy).toHaveBeenCalledWith([...FIELDS], [...INCLUDE], [...BASE_FILTER]);
-      expect(performSearchSpy).toHaveBeenCalledWith(term, lang, mockPosts);
+      expect(queryPostsSpy).toHaveBeenCalledWith([...FIELDS], [...INCLUDE], [...BASE_FILTER, ['tag', `hash-lang-${lang}`]]);
+      expect(performSearchSpy).toHaveBeenCalledWith(term, mockPosts);
     });
   });
   
