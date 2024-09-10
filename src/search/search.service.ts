@@ -42,11 +42,12 @@ export class SearchService {
     private castPostsToResult(posts: any[]) : SearchResult[]  {
         return posts.map((post) => {
             return {
-                contentType: GhostContentType.Post,
+                contentType: GhostContentType.Article,
                 title: post.title,
                 url: post.url,
                 mainTag: post.mainTag, 
-                weight: post.weight
+                weight: post.weight,
+                difficultyLevel: post.difficultyLevel,
             };
         });
     }
