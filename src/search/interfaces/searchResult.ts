@@ -1,6 +1,7 @@
 export enum GhostContentType{
     Post = 'Post',
     Page = 'Page',
+    Article = 'Article'
 }
 export interface SearchResult{
     contentType: GhostContentType,
@@ -8,4 +9,5 @@ export interface SearchResult{
     url: string,
     mainTag?: string,
     weight?: Number,
+    difficultyLevel?: string,
 }

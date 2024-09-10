@@ -13,6 +13,7 @@ import { TechStack } from '../posts/enums/techStack';
 import { PostsService } from '../posts/posts.service';
 import { SEARCH_CACHE_OBJECT_KEYS } from '../constants';
 import { BASE_FILTER, FIELDS, INCLUDE } from './constants/ghost';
+import { diffieHellman } from 'crypto';
 
 describe('Posts Service', () => {
   let service: SearchService;
@@ -41,13 +42,14 @@ describe('Posts Service', () => {
     mockPosts = [
       { id: '1',title: 'Post 1', url: 'url1', slug: 'slug1', featured: true, 
         published_at: new Date('1990-02-20T20:11:10.230Z'), excerpt: 'post 1',
-          tags: [{ name: TechStack.Python.toLocaleLowerCase(), slug:'python' },{ name: 'index-1' }, { name: 'no_menu' },] },
+          tags: [{ name: TechStack.Python.toLocaleLowerCase(), slug:'python' },{ name: 'index-1' }, 
+            { name: 'no_menu' }, { name: `diff-level-begginer`, slug: `diff-level-begginer` }] },
       { id: '2', title: 'Post 2', url: 'url2', slug: 'slug2', featured: false,
          published_at: new Date('1960-06-29T20:11:10.230Z'), excerpt: 'post 2',
-          tags: [{ name: TechStack.TypeScript.toLocaleLowerCase(), slug:'typescript' }, { name: 'index-100' },] },
+          tags: [{ name: TechStack.TypeScript.toLocaleLowerCase(), slug:'typescript' }, { name: 'index-100' }, { name: `diff-level-intermediate`, slug: `diff-level-intermediate` }] },
       { id: '3', title: 'Post 3', url: 'url3', slug: 'slug3', featured: false,
          published_at: new Date('1958-06-29T20:11:10.230Z'), excerpt: 'post 3',
-        tags: [{ name: TechStack.NodeJS.toLocaleLowerCase(), slug:'node.js' }, { name: 'index-50' }, ] },
+        tags: [{ name: TechStack.NodeJS.toLocaleLowerCase(), slug:'node.js' }, { name: 'index-50' }, { name: `diff-level-advanced`, slug: `diff-level-advanced` }] },
     ] as Posts[];
 
     const englishPosts = mockPosts.map((post) =>  {
@@ -75,7 +77,8 @@ describe('Posts Service', () => {
                                   published_at: new Date('1990-02-20T20:11:10.230Z'),
                                   excerpt: 'For begginers',
                                   mainTag: TechStack.Python.toLocaleLowerCase(),
-                                  lang:'#lang-en'
+                                  lang:'#lang-en',
+                                  difficultyLevel: 'begginer',
 
                               }
                             ],
@@ -93,7 +96,8 @@ describe('Posts Service', () => {
                                 published_at: new Date('1960-06-29T20:11:10.230Z'),
                                 excerpt: 'Programming language',
                                 mainTag: TechStack.TypeScript.toLocaleLowerCase(),
-                                lang:'#lang-en'
+                                lang:'#lang-en',
+                                difficultyLevel: 'intermediate',
                               },
                               {
                                 id: '3',
@@ -105,7 +109,8 @@ describe('Posts Service', () => {
                                 published_at: new Date('1958-06-29T20:11:10.230Z'), 
                                 excerpt: 'This is a node post',
                                 mainTag: TechStack.NodeJS.toLocaleLowerCase(),
-                                lang:'#lang-en'
+                                lang:'#lang-en',
+                                difficultyLevel: 'advanced',
                               }
                             ]
       };
@@ -224,11 +229,12 @@ describe('Posts Service', () => {
     it('should return 1 post after performing a search with Term = Python', async () => {
       const term = "Python";
       const expectedSearchResult = {
-          contentType: 'Post',
+          contentType: 'Article',
           title: 'Python fundamentals',
           url: 'url1',
           mainTag: 'python',
-          weight: 1
+          weight: 1,
+          difficultyLevel: "begginer",
       }
       const result = await service.search(term, lang);
   
@@ -240,11 +246,12 @@ describe('Posts Service', () => {
     it('should return weight = 2 after performing a search with Term = Python funda', async () => {
       const term = "Python funda";
       const expectedSearchResult = {
-        contentType: 'Post',
+        contentType: 'Article',
         title: 'Python fundamentals',
         url: 'url1',
         mainTag: 'python',
-        weight: 2
+        weight: 2,
+        difficultyLevel: "begginer",
     };
       const result = await service.search(term, lang);
       expect(result.length).toEqual(1);

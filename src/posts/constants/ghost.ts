@@ -8,3 +8,4 @@ export const INDEX_TAG_FORMAT = 'index-'; //index-{number}
 export const LEVEL_TAG_FORMAT = 'level-'; //level-{number}
 export const NO_MENU_TAG = 'no_menu'; //level-{number}
 export const LANG_TAG_FORMAT = 'hash-lang-'; //index-{number}
+export const DIFFICULTY_LEVEL_TAG_FORMAT = 'diff-level-'; //diff-level-{begginer/intermediate/advance}

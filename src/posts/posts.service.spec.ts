@@ -41,77 +41,15 @@ describe('Posts Service', () => {
       get: jest.fn(),
     };
 
-    //TODO: move mock data outside
-    const mockPosts1 = [
-      { id: '1',title: 'Post 1', url: 'url1', slug: 'slug1', featured: true, 
-        published_at: new Date('1990-02-20T20:11:10.230Z'), excerpt: 'post 1',
-          tags: [{ name: TechStack.Python.toLocaleLowerCase(), slug:'python' },{ name: 'index-1' }, { name: 'no_menu' }, { name: '#lang-en', slug: 'hash-lang-en' }] },
-      { id: '2', title: 'Post 2', url: 'url2', slug: 'slug2', featured: false,
-         published_at: new Date('1960-06-29T20:11:10.230Z'), excerpt: 'post 2',
-          tags: [{ name: TechStack.TypeScript.toLocaleLowerCase(), slug:'typescript' }, { name: 'index-100' }, { name: '#lang-en', slug: 'hash-lang-en' }] },
-      { id: '3', title: 'Post 3', url: 'url3', slug: 'slug3', featured: false,
-         published_at: new Date('1958-06-29T20:11:10.230Z'), excerpt: 'post 3',
-        tags: [{ name: TechStack.NodeJS.toLocaleLowerCase(), slug:'nodejs' }, { name: 'index-50' }, { name: '#lang-en', slug: 'hash-lang-en' }] },
-    ] as Posts[];
-
-
-    const mockPostsProcessedResult1 = [
-      {
-        id: '1',
-        index: 1,
-        title: 'Post 1',
-        level: null,
-        no_menu: true,
-        url: 'url1',
-        slug: 'slug1',
-        featured: true,
-        new: false,
-        published_at: new Date('1990-02-20T20:11:10.230Z'),
-        excerpt: 'post 1',
-        mainTag: TechStack.Python.toLocaleLowerCase(),
-        lang:'#lang-en'
-
-    },
-    {
-      id: '2',
-      index: 100,
-      title: 'Post 2',
-      level: null,
-      no_menu: false,
-      url: 'url2',
-      slug: 'slug2',
-      featured: false,
-      new: false,
-      published_at: new Date('1960-06-29T20:11:10.230Z'),
-      excerpt: 'post 2',
-      mainTag: TechStack.TypeScript.toLocaleLowerCase(),
-      lang:'#lang-en'
-    },
-    {
-      id: '3',
-      index: 50,
-      title: 'Post 3',
-      level: null,
-      no_menu: false,
-      url: 'url3',
-      slug: 'slug3',
-      featured: false,
-      new: false,
-      published_at: new Date('1958-06-29T20:11:10.230Z'), 
-      excerpt: 'post 3',
-      mainTag: TechStack.NodeJS.toLocaleLowerCase(),
-      lang:'#lang-en'
-    }
-,
-    ];
-
     LANGS.forEach((_lang) => {
       TestTechStacks.forEach((tech, index) => {
         const no_menu = Math.random() >= 0.5;
         const featured = Math.random() >= 0.5;
+        const difficultyLevel = Math.random() < 0.3 ? 'advanced' : Math.random() < 0.5 ? 'intermediate' : 'begginer';
         const tags: Tag[] = [
           { name: tech.toLocaleLowerCase(), slug:tech.toLocaleLowerCase() },
-          { name: `#lang-${_lang}`, slug: `hash-lang-${_lang}` }
+          { name: `#lang-${_lang}`, slug: `hash-lang-${_lang}` },
+          { name: `diff-level-${difficultyLevel}`, slug: `diff-level-${difficultyLevel}` }
         ]
         if (no_menu){
           tags.push({ name: 'no_menu' });
@@ -144,7 +82,8 @@ describe('Posts Service', () => {
           published_at: new Date('1990-02-20T20:11:10.230Z'),
           excerpt: `Post excerpt ${index}`,
           mainTag: tech.toLocaleLowerCase(),
-          lang:`#lang-${_lang}`
+          lang:`#lang-${_lang}`,
+          difficultyLevel,
         }
         mockPostsProcessedResult[generateCacheKey([tech, _lang])] = [postResult];
       });
@@ -216,7 +155,7 @@ describe('Posts Service', () => {
           const buildUrlSpy = jest.spyOn(service as any, 'buildUrl');
           const posts = await service.getPostDataAndUpdateCache(tech, _lang as LANG, [], [], []);
           expect(isNewSpy).toHaveBeenCalledTimes(posts.length);
-          expect(getFirstTagWithPattherSpy).toHaveBeenCalledTimes(posts.length*3);
+          expect(getFirstTagWithPattherSpy).toHaveBeenCalledTimes(posts.length*4);
           expect(getIndexFromSpy).toHaveBeenCalledTimes(posts.length);
           expect(buildUrlSpy).toHaveBeenCalledWith([],[],[]);
         });
