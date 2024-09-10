@@ -202,15 +202,12 @@ describe('Posts Service', () => {
 
   });
 
-
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
-
   LANGS.forEach((_lang) => {
       TestTechStacks.forEach((tech) => {
-
         it(`should get course posts array and update cache: ${tech}`, async () => {
           mockHttpService.get.mockReturnValue(of({ data: { posts: mockPosts[generateCacheKey([tech.toString(), _lang.toString()])] } }));
           const isNewSpy = jest.spyOn(service as any, 'isNew');
