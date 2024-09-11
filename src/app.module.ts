@@ -7,6 +7,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { RedisModule } from './redis/redis.module';
 import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis';
 import { SearchModule } from './search/search.module';
+import { MembersModule } from './members/members.module';
 
 const ENV = process.env.NODE_ENV;
 
@@ -15,6 +16,7 @@ const ENV = process.env.NODE_ENV;
     RedisModule,
     PostsModule,  
     SearchModule,
+    MembersModule,
     ConfigModule.forRoot({
       envFilePath: path.resolve(!ENV ? '.env' : `.env.${ENV}`),
       isGlobal: true,

@@ -6,7 +6,7 @@ import { Posts } from '../interfaces/posts';
 import { RedisService } from '../redis/redis.service';
 import { PostWebhookPayload } from '../interfaces/postwebhookpayload';
 import { GHOST_POST_FIELD }  from './interfaces/postfields'
-import { DIFFICULTY_LEVEL_TAG_FORMAT, INDEX_TAG_FORMAT, LANG_TAG_FORMAT, LEVEL_TAG_FORMAT, NO_MENU_TAG } from './constants/ghost';
+import { INDEX_TAG_FORMAT, LANG_TAG_FORMAT, LEVEL_TAG_FORMAT, NO_MENU_TAG } from './constants/ghost';
 import { SEARCH_CACHE_OBJECT_KEYS } from '../constants';
 import { isTechStack, TechStack } from './enums/techStack';
 import { Tag } from '../interfaces/tags';
@@ -182,19 +182,12 @@ export class PostsService {
                     excerpt: post[GHOST_POST_FIELD.base.EXCERPT],
                     mainTag: this.getMainTag(post[GHOST_POST_FIELD.base.TAGS]),
                     lang: this.getFirstTagWithPatther(post[GHOST_POST_FIELD.base.TAGS], LANG_TAG_FORMAT),
-                    difficultyLevel: this.getDifficulty(post[GHOST_POST_FIELD.base.TAGS], DIFFICULTY_LEVEL_TAG_FORMAT),
                 }
             })
         }
         return postData;
     }
 
-    private getDifficulty(tags: Array<any>, pattern: String): string | undefined {
-        const tagName = this.getFirstTagWithPatther(tags, pattern);
-        if (!tagName) return undefined
-        const words = tagName.split('-')
-        return words.length > 0 ? words[words.length - 1] : undefined;
-    }
     private async setTechCache(key, value){
         this.redisService.set(key, value);
         this.addTechStack(SEARCH_CACHE_OBJECT_KEYS.DATA, key);
