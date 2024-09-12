@@ -3,7 +3,7 @@ import { HttpModule } from '@nestjs/axios';
 import { RedisModule } from '../redis/redis.module';
 import { MembersService } from './members.service';
 import { MembersController } from './members.controller';
-import { UtilsService } from 'src/utils/utils.service';
+import { UtilsService } from '../utils/utils.service';
 
 @Module({
   imports: [

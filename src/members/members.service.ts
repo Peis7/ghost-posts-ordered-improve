@@ -4,7 +4,7 @@ import { HttpService } from '@nestjs/axios';
 import { catchError, firstValueFrom } from 'rxjs';
 import { SubscribeDTO } from './dtos/subscribe.dto';
 import { ConfigService } from '@nestjs/config';
-import { UtilsService } from 'src/utils/utils.service';
+import { UtilsService } from '../utils/utils.service';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { Member } from './interfaces/members';
 
