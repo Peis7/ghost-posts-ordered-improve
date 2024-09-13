@@ -15,15 +15,19 @@ import { TestTechStacks } from './test/data';
 import { GHOST_POST_FIELD } from './interfaces/postfields';
 import { LANG } from './enums/langs';
 import { KeyPairSyncResult } from 'crypto';
+import { UtilsService } from '../utils/utils.service';
  
 
 describe('Posts Service', () => {
   let service: PostsService;
   let mockHttpService: { get: jest.Mock };
+  let mockUtilsService: { getConfig: jest.Mock };
   const ENV = process.env.NODE_ENV;
   let mockPosts = {};
   let mockPostsProcessedResult= {};
   let redisService: RedisService;
+  let configService: ConfigService;
+  let utilsService: UtilsService;
   const generateCacheKey = (values:Array<string>): string => values.join('_');
   const LANGS = ['en','es'];
   const currentTechLangPair = { tech: TechStack , lang: LANG}
@@ -40,6 +44,11 @@ describe('Posts Service', () => {
     mockHttpService = {
       get: jest.fn(),
     };
+
+
+   mockUtilsService = { 
+    getConfig: jest.fn()
+  };
 
     LANGS.forEach((_lang) => {
       TestTechStacks.forEach((tech, index) => {
@@ -120,11 +129,22 @@ describe('Posts Service', () => {
           provide: RedisService,
           useValue: createMock<RedisService>(),
         },
+        {
+          provide: UtilsService,
+          useValue: mockUtilsService,
+        },
       ]
     }).compile();
  
     redisService = module.get<RedisService>(RedisService);
+    configService = module.get<ConfigService>(ConfigService);
+
+    utilsService = module.get<UtilsService>(UtilsService);
     service = module.get<PostsService>(PostsService);
+
+    jest.spyOn(utilsService, 'getConfig').mockImplementation((key: string) => {
+      return configService.get(key);
+    });
 
     // Mock Redis methods to use in-memory cache
     jest.spyOn(redisService, 'set').mockImplementation((key: string, value: string) => {

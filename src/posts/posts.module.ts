@@ -4,14 +4,15 @@ import { PostsService } from './posts.service';
 import { HttpModule } from '@nestjs/axios';
 import { RedisModule } from '../redis/redis.module';
 import { CacheModule } from '../cache/cache.module';
+import { UtilsService } from '../utils/utils.service';
 
 @Module({
   imports: [
     HttpModule,
     CacheModule,
-    RedisModule
+    RedisModule,
   ],
   controllers: [PostsController],
-  providers: [PostsService]
+  providers: [PostsService, UtilsService]
 })
 export class PostsModule {}

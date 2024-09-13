@@ -66,7 +66,7 @@ export class SearchService {
         let matchingPosts = [];
         const words = term.trim() === "" ? [] : term.split(/\s+/);
         posts.forEach((post)=>{
-            //if (post['no_menu']) return;// exclude post that are not part of the menu
+            //if (post['no_menu']) return;// exclude post that are just menu used porpose
             if (!post['no_menu']){
                 let count = 0;
                 words.forEach((word)=> {

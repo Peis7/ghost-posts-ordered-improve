@@ -52,12 +52,13 @@ describe('PostsController', () => {
           provide: PostsService, useValue: mockPostsService 
         }, 
         ConfigService, {
-        provide: HttpService,
-        useValue: {
-          get: jest.fn(),
-          post: jest.fn(),
-        },
-      },],
+                provide: HttpService,
+                useValue: {
+                  get: jest.fn(),
+                  post: jest.fn(),
+                },
+           },
+      ],
       controllers: [PostsController],
     }).compile();
 
