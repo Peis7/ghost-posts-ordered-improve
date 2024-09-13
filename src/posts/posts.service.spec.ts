@@ -8,13 +8,10 @@ import configuration from '../config/configuration';
 import { of } from 'rxjs';
 import { RedisService } from '../redis/redis.service';
 import { createMock } from '@golevelup/ts-jest';
-import { POST_ORDER_DATA_KEY } from '../cache/constants';
-import { Posts } from '../interfaces/posts';
 import { TechStack } from './enums/techStack';
 import { TestTechStacks } from './test/data';
 import { GHOST_POST_FIELD } from './interfaces/postfields';
 import { LANG } from './enums/langs';
-import { KeyPairSyncResult } from 'crypto';
 import { UtilsService } from '../utils/utils.service';
  
 
