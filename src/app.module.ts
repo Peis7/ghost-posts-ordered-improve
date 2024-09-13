@@ -28,6 +28,11 @@ const ENV = process.env.NODE_ENV;
       useFactory: (configService: ConfigService) =>{ 
         const ttl = configService.get<number>('THROTTLE_TTL');
         const limit = configService.get<number>('THROTTLE_LIMIT');
+
+        const ttlMembers = configService.get<number>('THROTTLE_TTL_MEMBERS');
+        const limitMembers = configService.get<number>('THROTTLE_LIMIT_MEMBERS');
+
+        console.log(ttlMembers || ttl);
         const storage = new ThrottlerStorageRedisService(
           configService.get('RUNNING_ON_GHA', false)
             ? {
@@ -45,8 +50,15 @@ const ENV = process.env.NODE_ENV;
         );
         return [
           {
+            name:"default",
             ttl,
             limit,
+            storage
+          },
+          {
+            name:"members",
+            ttl: ttlMembers || ttl,
+            limit: limitMembers || limit,
             storage
           },
         ]

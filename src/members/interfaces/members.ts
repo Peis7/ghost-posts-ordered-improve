@@ -1,4 +1,4 @@
 export interface Member{
-    id: string,
+    subscribed? : string,
     email?: string,
 }

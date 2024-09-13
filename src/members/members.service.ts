@@ -3,7 +3,6 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { catchError, firstValueFrom } from 'rxjs';
 import { SubscribeDTO } from './dtos/subscribe.dto';
-import { ConfigService } from '@nestjs/config';
 import { UtilsService } from '../utils/utils.service';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { Member } from './interfaces/members';
@@ -20,15 +19,22 @@ export class MembersService {
  
     async subscribe({ email }: SubscribeDTO): Promise<Member> {
         try {
-            const user = await this.redisService.get(email.trim());
+            let user = await this.redisService.get(email.trim());
             if (user) {
                 throw new HttpException('Email already exists in the system', HttpStatus.CONFLICT);
+            }
+
+            if (!user){
+                const seacrhResult = await this.getMemberBy(email);
+                if (seacrhResult['data']['members'] && seacrhResult['data']['members'].length > 0){
+                    throw new HttpException('Email already exists in the system', HttpStatus.CONFLICT);
+                }
             }
     
             const audience = 'members/';
             const url = this.buildUrl(audience);
             const token = this.utilsService.signToken('/admin/');
-            const data = { members: [{ email }] };
+            const payloadData = { members: [{ email }] };
             const headers = {
                 Authorization: `Ghost ${token}`,
                 'Accept-Version': 'v5.0',
@@ -37,12 +43,24 @@ export class MembersService {
             const requestConfig: AxiosRequestConfig = {
                 url,
                 method: 'POST',
-                data,
+                data: payloadData,
                 headers
             };
     
             const response = await this.request(requestConfig);
-            return response.data as Member;
+
+            const { data } = response;
+            const { members } = data;
+
+            if (!(response.status === HttpStatus.CREATED) && members.length == 0){
+                throw new HttpException('Could not create subscription', HttpStatus.SERVICE_UNAVAILABLE);
+            }
+            const memberData: Member = {
+                email: members[0].email,
+                subscribed : members[0].subscribed,
+            };
+
+            return memberData;
     
         } catch (error) {
             if (error.response) {
@@ -65,15 +83,18 @@ export class MembersService {
 
     async updateCachedMembers(email:string): Promise<string>{
         await this.redisService.set(email, '1');
-        return await  this.redisService.get(email);
+        return this.redisService.get(email);
     }
 
     async getAllCurrentMembers():  Promise<Member[]> {
-        const firstPageMembers = await this.getMembersFrom(1,10);
+        const firstPageMembers = await this.getMembersFrompPage(1,10);
         return firstPageMembers as Member[];
     }
 
-    private async getMembersFrom(startPage: number, limit: number): Promise<Member[]> {
+    private async getMemberBy(email:string): Promise<AxiosResponse>{
+        return this.getMembers([['email', email]],[['email',email]]);
+    }
+    private async getMembersFrompPage(startPage: number, limit: number): Promise<Member[]> {
         const cacheMembers = this.utilsService.getConfig('ghost.cache_members');
         let allMembers: Member[] = [];
         let currentPage = startPage;
@@ -81,7 +102,7 @@ export class MembersService {
 
     
         while (hasMorePages) {
-            const response = await this.getMembers([['limit', limit.toString()], ['page', currentPage.toString()]]);
+            const response = await this.getMembers([['limit', limit.toString()], ['page', currentPage.toString()]],[]);
             if (!(response['data']['members'] && response['data']['meta'])) {
                 hasMorePages = false;
                 break;
@@ -98,13 +119,12 @@ export class MembersService {
             }
             currentPage++;
         }
-    
         return allMembers;
     }
     
-    async getMembers(filter: ArrayOfStringPairs): Promise<AxiosResponse> {
+    async getMembers(params: ArrayOfStringPairs,filter: ArrayOfStringPairs): Promise<AxiosResponse> {
         const audience = 'members/';
-        const url = this.buildUrl(audience, filter, ['email']);
+        const url = this.buildUrl(audience, params, ['email'], filter);
         const token = this.utilsService.signToken('/admin/');
         const headers = { 
                           Authorization: `Ghost ${token}`,
@@ -129,7 +149,7 @@ export class MembersService {
                     }),
             ));
     }
-    private buildUrl(audience: string, params?: ArrayOfStringPairs,  fields?: Array<string>): string {
+    private buildUrl(audience: string, params?: ArrayOfStringPairs,  fields?: Array<string>,filter?: ArrayOfStringPairs): string {
         const port = this.utilsService.getConfig('ghost.port');
         const amdinPath = this.utilsService.getConfig('ghost.api_admin_path');
         const domain = this.utilsService.getConfig('ghost.api_url');
@@ -143,6 +163,12 @@ export class MembersService {
         }
         if (fields?.length > 0) {
             url.searchParams.append('fields', fields.join(','));
+        }
+        if (filter?.length > 0) {
+            let filterOptions = filter.map(filter=>{
+                return filter.join(':');
+            })
+            url.searchParams.append('filter', filterOptions.join('+'));
         }
 
         return url.toString();
