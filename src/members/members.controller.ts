@@ -15,6 +15,11 @@ export class MembersController {
     return response as SubscribeSerializedDTO;
   }
 
+  @Get('/all')
+  async all(): Promise<Array<SubscribeSerializedDTO>>   {
+    const response = await this.membersService.getAllCurrentMembers()
+    return response as [SubscribeSerializedDTO];
+  }
 
 }
  

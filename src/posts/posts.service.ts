@@ -12,13 +12,15 @@ import { isTechStack, TechStack } from './enums/techStack';
 import { Tag } from '../interfaces/tags';
 import { ArrayOfStringPairs } from '../types/custom';
 import { LANG } from './enums/langs';
+import { UtilsService } from '../utils/utils.service';
 
 @Injectable()
 export class PostsService {
     constructor(
         private configService: ConfigService,
         private readonly httpService: HttpService,
-        private redisService: RedisService
+        private redisService: RedisService,
+        private readonly utilsService: UtilsService,
     ) {}
 
     async updateCache(data: PostWebhookPayload): Promise<void> {
@@ -259,9 +261,9 @@ export class PostsService {
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
     private buildUrl(fields: Array<string>, include: Array<string>, filter: ArrayOfStringPairs): string {
-        const baseUrl = `${this.getConfig('ghost.api_url')}:${this.getConfig('ghost.port')}`;
-        const contentPath = this.getConfig('ghost.content_path');
-        const apiKey = this.getConfig('ghost.content_api_key');
+        const baseUrl = `${this.utilsService.getConfig('ghost.api_url')}:${this.utilsService.getConfig('ghost.port')}`;
+        const contentPath = this.utilsService.getConfig('ghost.content_path');
+        const apiKey = this.utilsService.getConfig('ghost.content_api_key');
     
         const url = new URL(contentPath, baseUrl);
 

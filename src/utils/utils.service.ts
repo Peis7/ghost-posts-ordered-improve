@@ -14,7 +14,6 @@ export class UtilsService {
         const expiresIn = this.getConfig('ghost.jwt_expiration');
         const apiKey = this.getConfig('ghost.admin_api_key');
     
-        console.log(algorithm+' '+expiresIn+ ' ' + apiKey);
         const [id, secret] = apiKey.split(':');
 
         const token = jwt.sign({}, Buffer.from(secret, 'hex'), {
