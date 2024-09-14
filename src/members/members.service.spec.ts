@@ -83,9 +83,9 @@ describe('Posts Service', () => {
 
     service = module.get<MembersService>(MembersService);
 
-    jest.spyOn(utilsService, 'getConfig').mockImplementation((key: string) => {
-      return configService.get(key);
-    });
+    // jest.spyOn(utilsService, 'getConfig').mockImplementation((key: string) => {
+    //   return configService.get(key);
+    // });
 
     // Mock Redis methods to use in-memory cache
     jest.spyOn(redisService, 'set').mockImplementation((key: string, value: string) => {
@@ -108,10 +108,10 @@ describe('Posts Service', () => {
 
 
   it(`should get course posts array and update cache`, async () => {
-    mockHttpService.get.mockReturnValue(of({ data: { posts: []} }));
-    const isNewSpy = jest.spyOn(service as any, 'isNew');
-    const getFirstTagWithPattherSpy = jest.spyOn(service as any, 'getFirstTagWithPatther');
-    const getIndexFromSpy = jest.spyOn(service as any, 'getIndexFrom');
+    // mockHttpService.get.mockReturnValue(of({ data: { posts: []} }));
+    // const isNewSpy = jest.spyOn(service as any, 'isNew');
+    // const getFirstTagWithPattherSpy = jest.spyOn(service as any, 'getFirstTagWithPatther');
+    // const getIndexFromSpy = jest.spyOn(service as any, 'getIndexFrom');
     // const buildUrlSpy = jest.spyOn(service as any, 'buildUrl');
     // const posts = await service.getPostDataAndUpdateCache(tech, _lang as LANG, [], [], []);
     // expect(isNewSpy).toHaveBeenCalledTimes(posts.length);

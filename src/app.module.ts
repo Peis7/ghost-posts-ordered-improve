@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { PostsModule } from './posts/posts.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from './config/configuration';
@@ -8,6 +8,12 @@ import { RedisModule } from './redis/redis.module';
 import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis';
 import { SearchModule } from './search/search.module';
 import { MembersModule } from './members/members.module';
+import { RedisService } from './redis/redis.service';
+
+import * as session from 'express-session';
+import Redis from 'ioredis';
+import RedisStore  from 'connect-redis';
+
 
 const ENV = process.env.NODE_ENV;
 
@@ -32,7 +38,6 @@ const ENV = process.env.NODE_ENV;
         const ttlMembers = configService.get<number>('THROTTLE_TTL_MEMBERS');
         const limitMembers = configService.get<number>('THROTTLE_LIMIT_MEMBERS');
 
-        console.log(ttlMembers || ttl);
         const storage = new ThrottlerStorageRedisService(
           configService.get('RUNNING_ON_GHA', false)
             ? {
@@ -68,4 +73,32 @@ const ENV = process.env.NODE_ENV;
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+
+
+export class AppModule implements NestModule {
+  constructor(private readonly redisService: RedisService) {}
+
+  configure(consumer: MiddlewareConsumer) {
+
+    const store = new RedisStore({
+      client: this.redisService.getClient(),
+      prefix: 'sess:', // Optional: Prefix for session keys in Redis
+    });
+
+    consumer
+      .apply(
+        session({
+          store,
+          secret: 'your-secret-key',
+          resave: false,
+          saveUninitialized: false,
+          cookie: {
+            secure: process.env.NODE_ENV === 'production',
+            httpOnly: true,
+            maxAge: 24 * 60 * 60 * 1000,
+          },
+        }),
+      )
+      .forRoutes('*');
+  }
+}

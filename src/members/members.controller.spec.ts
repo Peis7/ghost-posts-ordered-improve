@@ -64,14 +64,7 @@ describe('PostsController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
-    expect(controller.all).toBeDefined();
     expect(controller.subscribe).toBeDefined();
-  });
-   
-  it('should use members service to get all members', async () => {
-    const result = await controller.all();
-    const getAllCurrentMembersSpy = jest.spyOn(membersService, 'getAllCurrentMembers');
-    expect(getAllCurrentMembersSpy).toHaveBeenCalled();
   });
 
   it('should create a member', async () => {

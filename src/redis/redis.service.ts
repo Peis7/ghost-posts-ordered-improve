@@ -2,13 +2,28 @@ import { Inject, Injectable } from '@nestjs/common';
 import Redis from 'ioredis';
 import { CACHE_OPTIONS } from '../cache/constants';
 import { ConfigService } from '@nestjs/config';
+import { UtilsService } from '../utils/utils.service';
 
 @Injectable()
 export class RedisService {
+  private readonly client: Redis;
+  
   constructor(
       @Inject(CACHE_OPTIONS) private readonly redisClient: Redis,
-      private configService: ConfigService
-    ) {}
+      private configService: ConfigService,
+      private readonly utilsService: UtilsService,
+    ) {
+      this.client = new Redis({
+        host: this.utilsService.getConfig('redis.host'),
+        port: Number(this.utilsService.getConfig('redis.port')) || 6379,
+        username: this.utilsService.getConfig('redis.username'),
+        password: this.utilsService.getConfig('redis.password'),
+      });
+    }
+  
+    getClient(): Redis {
+      return this.client;
+    }
 
   async set(key: string, value: any, seconds?: number): Promise<string> {
     const result = await this.redisClient.set(key, value);
