@@ -9,10 +9,12 @@ import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis';
 import { SearchModule } from './search/search.module';
 import { MembersModule } from './members/members.module';
 import { RedisService } from './redis/redis.service';
-
 import * as session from 'express-session';
-import Redis from 'ioredis';
 import RedisStore  from 'connect-redis';
+import { UtilsService } from './utils/utils.service';
+import { Envintoment } from './enums/env.enum';
+import { UtilsModule } from './utils/utils.module';
+import { SameSite } from './enums/cookies.enum';
 
 
 const ENV = process.env.NODE_ENV;
@@ -23,6 +25,7 @@ const ENV = process.env.NODE_ENV;
     PostsModule,  
     SearchModule,
     MembersModule,
+    UtilsModule,
     ConfigModule.forRoot({
       envFilePath: path.resolve(!ENV ? '.env' : `.env.${ENV}`),
       isGlobal: true,
@@ -58,45 +61,64 @@ const ENV = process.env.NODE_ENV;
             name:"default",
             ttl,
             limit,
-            storage
+            storage,
+            keyGenerator: (req) => {
+              const sessionID = req.sessionID;
+              const ipAddress = req.ip;
+              return `${sessionID}-${ipAddress}`; // Combines sessionID and IP address
+            },
           },
           {
             name:"members",
             ttl: ttlMembers || ttl,
             limit: limitMembers || limit,
-            storage
+            storage,
+            keyGenerator: (req) => {
+              const sessionID = req.sessionID;
+              const ipAddress = req.ip;
+              return `${sessionID}-${ipAddress}`; // Combines sessionID and IP address
+            },
           },
         ]
       },
     }),
   ],
   controllers: [],
-  providers: [],
+  providers: [UtilsService],
 })
 
 
 export class AppModule implements NestModule {
-  constructor(private readonly redisService: RedisService) {}
+  constructor(
+    private readonly redisService: RedisService,
+    private readonly utilsService: UtilsService
+  ) {}
 
-  configure(consumer: MiddlewareConsumer) {
+  async configure(consumer: MiddlewareConsumer) {
 
+    const redisSessionExpirationTime = this.redisService.getDefaultTimeInSeconds('SESSION_REDIS_TIME_UNIT','SESSION_REDIS_TTL');
+    const maxAge = redisSessionExpirationTime; //aligned for convinience
     const store = new RedisStore({
       client: this.redisService.getClient(),
       prefix: 'sess:', // Optional: Prefix for session keys in Redis
+      ttl: redisSessionExpirationTime,
     });
 
     consumer
       .apply(
         session({
           store,
-          secret: 'your-secret-key',
+          secret: this.utilsService.getConfig('session.secret'),
           resave: false,
-          saveUninitialized: false,
+          saveUninitialized: true,
           cookie: {
-            secure: process.env.NODE_ENV === 'production',
+            secure: process.env.NODE_ENV === Envintoment.Production, // true in production, false in local
             httpOnly: true,
-            maxAge: 24 * 60 * 60 * 1000,
+            maxAge:maxAge*1000, //milliseconds, so we multiply by 1000
+            sameSite: process.env.NODE_ENV === Envintoment.Production ? SameSite.None : SameSite.Lax, // Lax for local
+            path: '/api/v1/',
           },
+          name: 'sessionId',
         }),
       )
       .forRoutes('*');
