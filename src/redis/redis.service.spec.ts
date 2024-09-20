@@ -4,6 +4,7 @@ import Redis from 'ioredis';
 import { RedisService } from './redis.service';
 import { CACHE_OPTIONS } from '../cache/constants';
 import { ConfigService } from '@nestjs/config';
+import { UtilsService } from '../utils/utils.service';
 
 describe('RedisService', () => {
   let redisClient: Redis;
@@ -17,6 +18,7 @@ describe('RedisService', () => {
       providers: [
         ConfigService,
         RedisService,
+        UtilsService,
         {
           provide: CACHE_OPTIONS,
           useValue: createMock<Redis>(),

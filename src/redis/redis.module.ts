@@ -1,23 +1,22 @@
 import { Module } from '@nestjs/common';
-import Redis, { RedisOptions } from 'ioredis';
+import Redis from 'ioredis';
 import { CacheModule } from '../cache/cache.module';
-// import { ConfigBridgeModule } from '../config/config.bridge.module';
-// import { ConfigBridgeService } from '../config/config.bridge.service';
 import { RedisService } from './redis.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { UtilsService } from '../utils/utils.service';
 
 @Module({
   imports: [
     CacheModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        connectionOptions: configService.get('RUNNING_ON_GHA', false)
+        connectionOptions: configService.get('RUNNING_ON_GHA', 'false') === 'true'
           ? {
               connectionName: configService.get('REDIS_CONNECTION_NAME'),
               host: configService.get('REDIS_HOST'),
               port: Number(configService.get('REDIS_PORT')) || 6379,
             }
-          : {
+          : { 
               connectionName: configService.get('REDIS_CONNECTION_NAME'),
               host: configService.get('REDIS_HOST'),
               port: Number(configService.get('REDIS_PORT'))  || 6379,
@@ -31,7 +30,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       inject: [ConfigService],
     }),
   ],
-  providers: [RedisService],
+  providers: [RedisService, UtilsService],
   exports: [RedisService],
 })
 export class RedisModule {}

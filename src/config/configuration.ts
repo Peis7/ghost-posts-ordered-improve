@@ -10,5 +10,16 @@ export default () => ({
       content_path: process.env.GHOST_POST_PATH,
       new_publication_treshhold: process.env.NEW_PUBLICATION_TRESHOLD || 30,
       cache_members: Boolean(process.env.CACHE_MEMBESRS),
+    },
+    redis:{
+      host: process.env.REDIS_HOST,
+      username: process.env.REDIS_USER_NAME,
+      password: process.env.REDIS_PASSWORD,
+      port: process.env.REDIS_PORT || 6379,
+    },
+    session:{
+      secret: process.env.SESSION_SECRET,
+      redis_ttl: process.env.SESSION_REDIS_TTL,
+      redis_ttl_unit: process.env.SESSION_REDIS_TIME_UNIT
     }
   });
