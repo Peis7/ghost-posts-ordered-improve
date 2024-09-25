@@ -1,5 +1,6 @@
 
 import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { isSet } from 'util/types';
 
 export class SubscribeDTO {
   @IsString()
@@ -8,5 +9,5 @@ export class SubscribeDTO {
   email: string;
 
   @IsOptional()
-  honeypot: string;
+  honeypot: any;
 }

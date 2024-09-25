@@ -5,6 +5,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { AppModule } from './app.module';
 import * as path from 'path';
 import configuration from './config/configuration';
+import { MiddlewareConsumer } from '@nestjs/common';
 
 
 describe('AppModule', () => {
@@ -36,7 +37,7 @@ describe('AppModule', () => {
 
     configService = module.get<ConfigService>(ConfigService);
   });
-
+  
   it('should be defined', () => {
     expect(module).toBeDefined();
   });
