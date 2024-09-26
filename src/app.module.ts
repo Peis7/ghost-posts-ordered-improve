@@ -16,6 +16,7 @@ import { Envintoment } from './enums/env.enum';
 import { UtilsModule } from './utils/utils.module';
 import { SameSite } from './enums/cookies.enum';
 import { WinstonLoggerService } from './logger/logger.service';
+import { LoggerWinstonModule } from './logger/logger.module';
 
 
 const ENV = process.env.NODE_ENV;
@@ -27,6 +28,7 @@ const ENV = process.env.NODE_ENV;
     SearchModule,
     MembersModule,
     UtilsModule,
+    LoggerWinstonModule,
     ConfigModule.forRoot({
       envFilePath: path.resolve(!ENV ? '.env' : `.env.${ENV}`),
       isGlobal: true,

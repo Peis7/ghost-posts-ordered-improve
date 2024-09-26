@@ -5,7 +5,7 @@ import { MembersController } from './members.controller';
 import { UtilsService } from '../utils/utils.service';
 import { RedisModule } from '../redis/redis.module';
 import { LoggerWinstonModule } from '../logger/logger.module';
-import { WinstonLoggerService } from 'src/logger/logger.service';
+import { WinstonLoggerService } from '../logger/logger.service';
 
 @Module({
   imports: [

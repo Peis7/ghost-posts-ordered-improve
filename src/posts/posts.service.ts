@@ -13,6 +13,7 @@ import { Tag } from '../interfaces/tags';
 import { ArrayOfStringPairs } from '../types/custom';
 import { LANG } from './enums/langs';
 import { UtilsService } from '../utils/utils.service';
+import { WinstonLoggerService } from '../logger/logger.service';
 
 @Injectable()
 export class PostsService {
@@ -21,6 +22,7 @@ export class PostsService {
         private readonly httpService: HttpService,
         private redisService: RedisService,
         private readonly utilsService: UtilsService,
+        private readonly winstonLoggerService: WinstonLoggerService ,
     ) {}
 
     async updateCache(data: PostWebhookPayload): Promise<void> {
