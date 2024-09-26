@@ -9,7 +9,7 @@ import { ArrayOfStringPairs } from '../types/custom';
 import { LANG } from './enums/langs';
 
 @UseGuards(ThrottlerGuard)
-@SkipThrottle({'members': true })
+@SkipThrottle({'members': true }) 
 @Controller('v1/posts')
 export class PostsController {
   constructor(private postsService: PostsService) {}

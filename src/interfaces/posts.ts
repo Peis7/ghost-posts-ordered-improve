@@ -8,4 +8,5 @@ export interface Posts{
     slug?: string,
     featured?: Boolean,
     published_at?: Date,
+    langURLs?: Array<string>,
 }
