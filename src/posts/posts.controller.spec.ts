@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PostsController } from './posts.controller';
-
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { PostsService } from './posts.service';
@@ -11,7 +10,6 @@ import configuration from '../config/configuration';
 import { BASE_FILTER, FIELDS, INCLUDE } from './constants/ghost';
 import { TechStack } from './enums/techStack';
 import { ArrayOfStringPairs } from '../types/custom';
-import { debug, error } from 'console';
 import { WinstonLoggerService } from '../logger/logger.service';
 import { LoggerWinstonModule } from '../logger/logger.module';
 

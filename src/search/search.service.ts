@@ -1,6 +1,4 @@
-import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { RedisService } from '../redis/redis.service';
 import { GhostContentType, SearchResult } from './interfaces/searchResult';
 import { BASE_FILTER, FIELDS, INCLUDE } from './constants/ghost';

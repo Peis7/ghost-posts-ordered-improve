@@ -1,5 +1,5 @@
 import { Body, Controller, Get, HttpException, HttpStatus, Post, Query, Req, UseGuards } from '@nestjs/common';
-import { Throttle, ThrottlerGuard, SkipThrottle } from '@nestjs/throttler';
+import { ThrottlerGuard, SkipThrottle } from '@nestjs/throttler';
 import { MembersService } from './members.service';
 import { SubscribeDTO } from './dtos/subscribe.dto';
 import { SubscribeSerializedDTO } from './dtos/serialized/subscribe.dto';

@@ -13,7 +13,6 @@ import { TechStack } from '../posts/enums/techStack';
 import { PostsService } from '../posts/posts.service';
 import { SEARCH_CACHE_OBJECT_KEYS } from '../constants';
 import { BASE_FILTER, FIELDS, INCLUDE } from './constants/ghost';
-import { diffieHellman } from 'crypto';
 
 describe('Posts Service', () => {
   let service: SearchService;
