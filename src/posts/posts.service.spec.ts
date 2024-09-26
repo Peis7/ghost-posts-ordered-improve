@@ -15,6 +15,7 @@ import { LANG } from './enums/langs';
 import { UtilsService } from '../utils/utils.service';
 import { LoggerWinstonModule } from '../logger/logger.module';
 import { WinstonLoggerService } from '../logger/logger.service';
+import { AVAILABLE_LANGS, MAIN_LANG } from './constants/ghost';
  
 
 describe('Posts Service', () => {
@@ -28,7 +29,7 @@ describe('Posts Service', () => {
   let configService: ConfigService;
   let utilsService: UtilsService;
   const generateCacheKey = (values:Array<string>): string => values.join('_');
-  const LANGS = ['en','es'];
+  const LANGS = AVAILABLE_LANGS;
   const currentTechLangPair = { tech: TechStack , lang: LANG}
   const inMemoryCache = new Map<string, string>();
   interface Tag {
@@ -38,6 +39,18 @@ describe('Posts Service', () => {
   const loggerMockBase = jest.fn().mockImplementation((message) => {
     console.log(message);
   });
+
+  function buildLangOptions(currentLang, slug){   
+      const urlLangs = [];
+      AVAILABLE_LANGS.map((lang)=>{
+          if (lang !== currentLang) {
+              const formatedSlug = MAIN_LANG === lang ? `${slug.substring(slug.indexOf('-') + 1)}`: `${lang}-${slug.substring(slug.indexOf('-') + 1)}`; 
+              urlLangs.push({ lang, slug: formatedSlug});
+          }
+      });
+      return urlLangs;
+  }
+
 
 
   beforeEach(async () => {
@@ -87,7 +100,7 @@ describe('Posts Service', () => {
          };
 
          mockPosts[generateCacheKey([tech, _lang])] = [post];
-
+         const slug = 'slug1';
         const postResult = {
           id: index,
           index: index,
@@ -95,7 +108,7 @@ describe('Posts Service', () => {
           level: null,
           no_menu,
           url: 'url1',
-          slug: 'slug1',
+          slug,
           featured,
           new: false,
           published_at: new Date('1990-02-20T20:11:10.230Z'),
@@ -103,6 +116,7 @@ describe('Posts Service', () => {
           mainTag: tech.toLocaleLowerCase(),
           lang:`#lang-${_lang}`,
           difficultyLevel,
+          langURLs: buildLangOptions(_lang, slug),
         }
         mockPostsProcessedResult[generateCacheKey([tech, _lang])] = [postResult];
       });
@@ -189,7 +203,7 @@ describe('Posts Service', () => {
           const buildUrlSpy = jest.spyOn(service as any, 'buildUrl');
           const posts = await service.getPostDataAndUpdateCache(tech, _lang as LANG, [], [], []);
           expect(isNewSpy).toHaveBeenCalledTimes(posts.length);
-          expect(getFirstTagWithPattherSpy).toHaveBeenCalledTimes(posts.length*4);
+          expect(getFirstTagWithPattherSpy).toHaveBeenCalledTimes(posts.length*5);
           expect(getIndexFromSpy).toHaveBeenCalledTimes(posts.length);
           expect(buildUrlSpy).toHaveBeenCalledWith([],[],[]);
         });
@@ -244,7 +258,7 @@ describe('Posts Service', () => {
           const spyGet = jest.spyOn(redisService, 'get');
           const spyGetTechFromTags = jest.spyOn(service as any, 'getTechFromTags');
           const spySetCahce = jest.spyOn(service as any, 'setTechCache');
-          const testPost = {...mockPosts[generateCacheKey([tech, _lang])][mockPosts[generateCacheKey([tech, _lang])].length - 1],id: '4', tags: [{name: tech} ]}; //get a copy of last test post to publish
+          const testPost = {...mockPosts[generateCacheKey([tech, _lang])][mockPosts[generateCacheKey([tech, _lang])].length - 1],id: 4, tags: [{name: tech}]}; //get a copy of last test post to publish
           const lengthBeforePublishedPost = inMemoryCache.size;
           await service.handlePublished(testPost);
           expect(spySetCahce).toHaveBeenCalledTimes(1);

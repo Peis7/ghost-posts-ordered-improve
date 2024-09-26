@@ -6,7 +6,7 @@ import { Posts } from '../interfaces/posts';
 import { RedisService } from '../redis/redis.service';
 import { PostWebhookPayload } from '../interfaces/postwebhookpayload';
 import { GHOST_POST_FIELD }  from './interfaces/postfields'
-import { DIFFICULTY_LEVEL_TAG_FORMAT, INDEX_TAG_FORMAT, LANG_TAG_FORMAT, LEVEL_TAG_FORMAT, NO_MENU_TAG } from './constants/ghost';
+import { AVAILABLE_LANGS, DIFFICULTY_LEVEL_TAG_FORMAT, INDEX_TAG_FORMAT, LANG_TAG_FORMAT, LEVEL_TAG_FORMAT, MAIN_LANG, NO_MENU_TAG } from './constants/ghost';
 import { SEARCH_CACHE_OBJECT_KEYS } from '../constants';
 import { isTechStack, TechStack } from './enums/techStack';
 import { Tag } from '../interfaces/tags';
@@ -38,7 +38,7 @@ export class PostsService {
         const tech: TechStack | undefined = TechStack[techStackString as keyof typeof TechStack];
 
 
-        if (!tech) return; //TODO: return a meaninful message
+        if (!tech) return; //TODO: return a meaninful message 
         const lang = this.getFirstTagWithPatther(tags, LANG_TAG_FORMAT);
         const cacheKey = this.generateCahceKey([tech, lang.match(/-(.*)/)[1]]);
         const cached = await this.redisService.get(cacheKey);
@@ -60,6 +60,7 @@ export class PostsService {
                         excerpt: excerpt || post[GHOST_POST_FIELD.base.EXCERPT],
                         mainTag: mainTag || this.getMainTag(tags || post[GHOST_POST_FIELD.base.TAGS]),
                         url: url || post[GHOST_POST_FIELD.base.URL],
+                        langURLs: this.buildLangOptions(this.getFirstTagWithPatther(tags, LANG_TAG_FORMAT),post[GHOST_POST_FIELD.base.SLUG]),
                     }
                     return updatedPost;
             }
@@ -111,6 +112,7 @@ export class PostsService {
             featured: post[GHOST_POST_FIELD.base.FEATURED],
             new: this.isNew(post[GHOST_POST_FIELD.base.PUBLISHED_AT]),
             mainTag: this.getMainTag(post[GHOST_POST_FIELD.base.TAGS]),
+            langURLs: this.buildLangOptions(this.getFirstTagWithPatther(post[GHOST_POST_FIELD.base.TAGS], LANG_TAG_FORMAT),post[GHOST_POST_FIELD.base.SLUG]),
         }
         const lang = this.getFirstTagWithPatther(post[GHOST_POST_FIELD.base.TAGS], LANG_TAG_FORMAT);
         const cacheKey = this.generateCahceKey([tech, lang]);
@@ -187,10 +189,25 @@ export class PostsService {
                     mainTag: this.getMainTag(post[GHOST_POST_FIELD.base.TAGS]),
                     lang: this.getFirstTagWithPatther(post[GHOST_POST_FIELD.base.TAGS], LANG_TAG_FORMAT),
                     difficultyLevel: this.getDifficulty(post[GHOST_POST_FIELD.base.TAGS], DIFFICULTY_LEVEL_TAG_FORMAT),
+                    langURLs: this.buildLangOptions(this.getFirstTagWithPatther(post[GHOST_POST_FIELD.base.TAGS], LANG_TAG_FORMAT),post[GHOST_POST_FIELD.base.SLUG]),
                 }
             })
         }
-        return postData;
+        return postData; 
+    }
+
+    private buildLangOptions(currentLangTag, slug){   
+        if (!currentLangTag) return []; 
+        const urlLangs = [];
+        const words = currentLangTag.split('-')
+        const current =  words.length > 0 ? words[words.length - 1] : MAIN_LANG;
+        AVAILABLE_LANGS.map((lang)=>{
+            if (lang !== current) {
+                const formatedSlug = MAIN_LANG === lang ? `${slug.substring(slug.indexOf('-') + 1)}`: `${lang}-${slug.substring(slug.indexOf('-') + 1)}`; 
+                urlLangs.push({ lang, slug: formatedSlug});
+            }
+        });
+        return urlLangs;
     }
 
     private getDifficulty(tags: Array<any>, pattern: String): string | undefined {
