@@ -8,7 +8,7 @@ import { MembersService } from './members.service';
 import { MembersController } from './members.controller';
 import { SubscribeDTO } from './dtos/subscribe.dto';
 import { HttpException, HttpStatus } from '@nestjs/common';
-import * as session from 'express-session';
+import { LoggerWinstonModule } from '../logger/logger.module';
 
 describe('PostsController', () => {
   const ENV = process.env.NODE_ENV;
@@ -39,6 +39,7 @@ describe('PostsController', () => {
                 }
             ],
         }),
+        LoggerWinstonModule
         
       ],
       providers: [

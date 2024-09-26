@@ -4,13 +4,16 @@ import { MembersService } from './members.service';
 import { MembersController } from './members.controller';
 import { UtilsService } from '../utils/utils.service';
 import { RedisModule } from '../redis/redis.module';
+import { LoggerWinstonModule } from '../logger/logger.module';
+import { WinstonLoggerService } from '../logger/logger.service';
 
 @Module({
   imports: [
     HttpModule,
-    RedisModule
+    RedisModule,
+    LoggerWinstonModule
   ],
   controllers: [MembersController],
-  providers: [MembersService, UtilsService]
+  providers: [MembersService, UtilsService, WinstonLoggerService]
 })
 export class MembersModule {}

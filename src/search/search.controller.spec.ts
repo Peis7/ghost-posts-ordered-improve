@@ -2,14 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { HttpService } from '@nestjs/axios';
-import { Posts } from '../interfaces/posts';
 import * as path from 'path';
 import configuration from '../config/configuration';
-import { BASE_FILTER, FIELDS, INCLUDE } from './constants/ghost';
-import { ArrayOfStringPairs } from '../types/custom';
 import { SearchController } from './search.controller';
 import { SearchService } from './search.service';
-import { TechStack } from '../posts/enums/techStack';
 
 
 describe('SearchController', () => {

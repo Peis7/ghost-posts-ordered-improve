@@ -13,6 +13,8 @@ import { TestTechStacks } from './test/data';
 import { GHOST_POST_FIELD } from './interfaces/postfields';
 import { LANG } from './enums/langs';
 import { UtilsService } from '../utils/utils.service';
+import { LoggerWinstonModule } from '../logger/logger.module';
+import { WinstonLoggerService } from '../logger/logger.service';
  
 
 describe('Posts Service', () => {
@@ -32,7 +34,11 @@ describe('Posts Service', () => {
   interface Tag {
     name: string;
     slug?: string;
-  }
+  }  
+  const loggerMockBase = jest.fn().mockImplementation((message) => {
+    console.log(message);
+  });
+
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -42,6 +48,13 @@ describe('Posts Service', () => {
       get: jest.fn(),
     };
 
+    const mockLoggerService = {
+      log: loggerMockBase,
+      error: loggerMockBase,
+      warn: loggerMockBase,
+      debug: loggerMockBase,
+      verbose: loggerMockBase
+    };
 
    mockUtilsService = { 
     getConfig: jest.fn()
@@ -107,12 +120,13 @@ describe('Posts Service', () => {
           imports: [ConfigModule],
           inject: [ConfigService],
           useFactory: (config: ConfigService) => [
-            {
-              ttl: config.get<number>('THROTTLE_TTL'),
-              limit: config.get<number>('THROTTLE_LIMIT')
-            }
-        ],
+              {
+                ttl: config.get<number>('THROTTLE_TTL'),
+                limit: config.get<number>('THROTTLE_LIMIT')
+              }
+          ],
         }),
+        LoggerWinstonModule
         
       ],
       providers: [
@@ -130,6 +144,9 @@ describe('Posts Service', () => {
           provide: UtilsService,
           useValue: mockUtilsService,
         },
+        { 
+          provide: WinstonLoggerService, useValue: mockLoggerService 
+        }, 
       ]
     }).compile();
  

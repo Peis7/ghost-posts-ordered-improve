@@ -4,7 +4,6 @@ import {  ThrottlerModule } from '@nestjs/throttler';
 import { HttpService } from '@nestjs/axios';
 import * as path from 'path';
 import configuration from '../config/configuration';
-import { of } from 'rxjs';
 import { RedisService } from '../redis/redis.service';
 import { createMock } from '@golevelup/ts-jest';
 import { UtilsService } from '../utils/utils.service';

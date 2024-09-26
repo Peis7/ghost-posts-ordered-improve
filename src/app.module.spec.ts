@@ -5,7 +5,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { AppModule } from './app.module';
 import * as path from 'path';
 import configuration from './config/configuration';
-import { MiddlewareConsumer } from '@nestjs/common';
+import { LoggerWinstonModule } from './logger/logger.module';
 
 
 describe('AppModule', () => {
@@ -31,6 +31,7 @@ describe('AppModule', () => {
             }
         ],
         }),
+        LoggerWinstonModule,
         AppModule,
       ],
     }).compile();

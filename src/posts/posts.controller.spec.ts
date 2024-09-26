@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PostsController } from './posts.controller';
-
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { PostsService } from './posts.service';
@@ -11,6 +10,8 @@ import configuration from '../config/configuration';
 import { BASE_FILTER, FIELDS, INCLUDE } from './constants/ghost';
 import { TechStack } from './enums/techStack';
 import { ArrayOfStringPairs } from '../types/custom';
+import { WinstonLoggerService } from '../logger/logger.service';
+import { LoggerWinstonModule } from '../logger/logger.module';
 
 
 describe('PostsController', () => {
@@ -18,9 +19,20 @@ describe('PostsController', () => {
   let postsService: PostsService;
   const ENV = process.env.NODE_ENV;
   const LANGS = ['en','es'];
+  const loggerMockBase = jest.fn().mockImplementation((message) => {
+    console.log(message);
+  });
 
   beforeEach(async () => {
     jest.clearAllMocks();
+
+    const mockLoggerService = {
+      log: loggerMockBase,
+      error: loggerMockBase,
+      warn: loggerMockBase,
+      debug: loggerMockBase,
+      verbose: loggerMockBase
+    };
     const mockPostsService = {
       getPostDataAndUpdateCache: jest.fn().mockResolvedValue([
         { id: '1', title: 'Post 1', url: 'url1', featured: true, slug:'p1', published_at: new Date('1990-02-20T20:11:10.230Z'), tags: [{ name:'tag1' }] },
@@ -45,19 +57,24 @@ describe('PostsController', () => {
             }
         ],
         }),
-        
+        LoggerWinstonModule,
       ],
       providers: [
         { 
           provide: PostsService, useValue: mockPostsService 
         }, 
-        ConfigService, {
-                provide: HttpService,
-                useValue: {
-                  get: jest.fn(),
-                  post: jest.fn(),
-                },
-           },
+        ConfigService, 
+        {
+          provide: HttpService,
+            useValue: {
+              get: jest.fn(),
+              post: jest.fn(),
+            },
+        },
+        { 
+          provide: WinstonLoggerService, useValue: mockLoggerService 
+        }, 
+
       ],
       controllers: [PostsController],
     }).compile();
