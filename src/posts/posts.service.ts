@@ -203,7 +203,7 @@ export class PostsService {
         const current =  words.length > 0 ? words[words.length - 1] : MAIN_LANG;
         AVAILABLE_LANGS.map((lang)=>{
             if (lang !== current) {
-                const formatedSlug = MAIN_LANG === lang ? `${slug.substring(slug.indexOf('-') + 1)}`: `${lang}-${slug.substring(slug.indexOf('-') + 1)}`; 
+                const formatedSlug = MAIN_LANG === lang ? `${slug.substring(slug.indexOf('-') + 1)}`: `${lang}-${slug}`; 
                 urlLangs.push({ lang, slug: formatedSlug});
             }
         });
