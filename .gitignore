@@ -45,6 +45,12 @@ lerna-debug.log*
 .env.local
 .env.test
 
+#redis
+redis.conf
+
+mysql-data
+ghost-content
+
 #log
 error.log
 combined.log

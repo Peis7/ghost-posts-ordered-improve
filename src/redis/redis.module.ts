@@ -10,21 +10,17 @@ import { UtilsService } from '../utils/utils.service';
     CacheModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        connectionOptions: configService.get('RUNNING_ON_GHA', 'false') === 'true'
-          ? {
+        connectionOptions: 
+          { 
               connectionName: configService.get('REDIS_CONNECTION_NAME'),
-              host: configService.get('REDIS_HOST'),
-              port: Number(configService.get('REDIS_PORT')) || 6379,
-            }
-          : { 
-              connectionName: configService.get('REDIS_CONNECTION_NAME'),
-              host: configService.get('REDIS_HOST'),
+              host: configService.get<string>('REDIS_HOST') || 'redis',
               port: Number(configService.get('REDIS_PORT'))  || 6379,
-              username: configService.get('REDIS_USER_NAME'),
-              password: configService.get('REDIS_PASSWORD'),
+              username: configService.get<string>('REDIS_USER_NAME'),
+              password: configService.get<string>('REDIS_PASSWORD'),
             },
         onClientReady: (client: Redis) => {
           console.log('Redis is ready');
+          console.log(configService.get('REDIS_HOST')+' - '+configService.get('REDIS_USER_NAME')+' - '+configService.get('REDIS_PASSWORD'));
         },
       }),
       inject: [ConfigService],
