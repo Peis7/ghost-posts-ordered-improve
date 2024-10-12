@@ -20,7 +20,6 @@ import { UtilsService } from '../utils/utils.service';
             },
         onClientReady: (client: Redis) => {
           console.log('Redis is ready');
-          console.log(configService.get('REDIS_HOST')+' - '+configService.get('REDIS_USER_NAME')+' - '+configService.get('REDIS_PASSWORD'));
         },
       }),
       inject: [ConfigService],
