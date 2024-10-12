@@ -1,0 +1,31 @@
+name: Deploy Nestjs App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install SSH Client
+        run: sudo apt-get install openssh-client -y
+
+      - name: Add SSH Key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy Theme to Server
+        run: |
+          ssh -o StrictHostKeyChecking=no root@167.99.11.239 << 'EOF'
+            cd /root/app/ghost-posts-ordered-improve || exit 1
+            git pull origin main || exit 1  # Fail the script if git pull fails
+            docker-compose down || exit 1
+            docker-compose --env-file .env.production up -d || exit 1  # Run in detached mode
+          EOF
