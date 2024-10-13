@@ -79,7 +79,7 @@ services:
 
   # Ghost CMS
   ghost-cms:
-    image: ghost:5-alpine
+    image: ghost:latest
     container_name: ghost-cms
     environment:
       database__client: mysql
