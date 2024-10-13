@@ -44,10 +44,6 @@ const ENV = process.env.NODE_ENV;
         const ttlMembers = configService.get<number>('THROTTLE_TTL_MEMBERS');
         const limitMembers = configService.get<number>('THROTTLE_LIMIT_MEMBERS');
 
-        console.log(configService.get('REDIS_HOST'));
-        console.log(configService.get('REDIS_USER_NAME'));
-        console.log(configService.get('REDIS_PORT'));
-        console.log(configService.get('RUNNING_ON_GHA', false) ? 1  : 2);
         const storage = new ThrottlerStorageRedisService({
                 connectionName: configService.get<string>('REDIS_CONNECTION_NAME'),
                 host: configService.get<string>('REDIS_HOST') || 'redis',
