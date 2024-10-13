@@ -91,7 +91,7 @@ services:
     volumes:
       - ./ghost-content:/var/lib/ghost/content
     ports:
-      - "8080:2369"
+      - "8080:2368"
     depends_on:
       - mysql
     networks:
