@@ -19,7 +19,7 @@ import { UtilsService } from '../utils/utils.service';
               password: configService.get<string>('REDIS_PASSWORD'),
             },
         onClientReady: (client: Redis) => {
-          console.log('Redis is ready');
+          console.log('Redis is ready.');
         },
       }),
       inject: [ConfigService],
