@@ -8,16 +8,18 @@ WORKDIR /app
 COPY package*.json ./
 
 # Clean build directories before building the app
-RUN npm run clean
+RUN npm run clean || echo "No clean script defined"
 
-# Install dependencies (only production ones for optimization)
+# Install dependencies
 RUN npm install 
 
+# Install NestJS CLI globally
 RUN npm install -g @nestjs/cli
 
 # Copy the rest of the application code to the container
 COPY . .
 
+# Check Node and npm versions
 RUN node -v && npm -v
 
 # Build the application
@@ -42,8 +44,5 @@ COPY .env.production .env.production
 # Expose the port the app runs on
 EXPOSE 3003
 
-# Define the command to start the application
-#CMD ["node", "dist/main"]
-
+# Command to start the application
 CMD ["node", "dist/main"]
-
