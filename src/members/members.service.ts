@@ -155,7 +155,7 @@ export class MembersService {
         const port = this.utilsService.getConfig('ghost.admin_port');
         const amdinPath = this.utilsService.getConfig('ghost.api_admin_path');
         const domain = this.utilsService.getConfig('ghost.admin_api_url');
-        let baseUrl = `${domain}${env === Envintoment.Development ? '' : ':'+ port }${amdinPath}`;
+        let baseUrl = `${domain}${env === Envintoment.Production ? '' : ':'+ port }${amdinPath}`;
 
         const url = new URL(audience, baseUrl);
 
