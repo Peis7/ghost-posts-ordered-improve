@@ -7,6 +7,9 @@ WORKDIR /app
 # Copy package.json and package-lock.json to the container
 COPY package*.json ./
 
+# Clean build directories before building the app
+RUN npm run clean
+
 # Install dependencies (only production ones for optimization)
 RUN npm install 
 
@@ -14,7 +17,6 @@ RUN npm install
 COPY . .
 
 RUN node -v && npm -v
-
 
 # Build the application
 RUN npm run build && ls -R /app

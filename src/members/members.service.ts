@@ -150,9 +150,9 @@ export class MembersService {
             ));
     }
     private buildUrl(audience: string, params?: ArrayOfStringPairs,  fields?: Array<string>,filter?: ArrayOfStringPairs): string {
-        const port = this.utilsService.getConfig('ghost.port');
+        const port = this.utilsService.getConfig('ghost.admin_port');
         const amdinPath = this.utilsService.getConfig('ghost.api_admin_path');
-        const domain = this.utilsService.getConfig('ghost.api_url');
+        const domain = this.utilsService.getConfig('ghost.admin_api_url');
         const baseUrl = `${domain}:${port}${amdinPath}`;
         const url = new URL(audience, baseUrl);
 
