@@ -173,7 +173,7 @@ export class MembersService {
             })
             url.searchParams.append('filter', filterOptions.join('+'));
         }
-
+        console.log(url.toString());
         return url.toString();
     }
 
