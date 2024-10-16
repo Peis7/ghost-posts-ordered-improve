@@ -13,6 +13,8 @@ RUN npm run clean
 # Install dependencies (only production ones for optimization)
 RUN npm install 
 
+RUN npm install -g @nestjs/cli
+
 # Copy the rest of the application code to the container
 COPY . .
 
