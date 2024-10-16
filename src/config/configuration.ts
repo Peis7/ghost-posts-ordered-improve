@@ -1,4 +1,7 @@
 export default () => ({
+    app:{
+      node_env: process.env.NODE_ENV || 'development',
+    },
     ghost: {
       api_admin_path: process.env.GHOST_ADMIN_API_PATH,
       api_url: process.env.GHOST_API_URL,

@@ -8,6 +8,7 @@ import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { Member } from './interfaces/members';
 import { RedisService } from '../redis/redis.service';
 import { ArrayOfStringPairs } from 'src/types/custom';
+import { Envintoment } from '../enums/env.enum';
 
 @Injectable()
 export class MembersService {
@@ -150,10 +151,12 @@ export class MembersService {
             ));
     }
     private buildUrl(audience: string, params?: ArrayOfStringPairs,  fields?: Array<string>,filter?: ArrayOfStringPairs): string {
+        const env = this.utilsService.getConfig('app.node_env');
         const port = this.utilsService.getConfig('ghost.admin_port');
         const amdinPath = this.utilsService.getConfig('ghost.api_admin_path');
         const domain = this.utilsService.getConfig('ghost.admin_api_url');
-        const baseUrl = `${domain}${amdinPath}`;
+        let baseUrl = `${domain}${env === Envintoment.Development ? '' : ':'+ port }${amdinPath}`;
+
         const url = new URL(audience, baseUrl);
 
         if ( params?.length > 0 ){
