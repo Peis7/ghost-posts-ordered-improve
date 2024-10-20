@@ -80,6 +80,9 @@ services:
   # Ghost CMS
   ghost-cms:
     image: ghost:latest
+    build: 
+      context: ./docker-ghost
+      dockerfile: Dockerfile 
     container_name: ghost-cms
     environment:
       database__client: mysql
