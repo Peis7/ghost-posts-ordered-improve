@@ -93,6 +93,7 @@ services:
       url: https://codeamautas.com
     volumes:
       - ./ghost-content:/var/lib/ghost/content
+      - ./ghost-content/config.production.json:/var/lib/ghost/config.production.json
     ports:
       - "8080:2368"
     depends_on:
