@@ -112,7 +112,7 @@ services:
     command: >
       --bind-address=0.0.0.0
     volumes:
-      - ./mysql-data:/var/lib/mysql:Z  # Use named volume
+      - ./mysql-data:/var/lib/mysql:Z
     networks:
       - app-network
     healthcheck:
